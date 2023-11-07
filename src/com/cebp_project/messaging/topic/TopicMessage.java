@@ -1,4 +1,4 @@
-package topic;
+package com.cebp_project.messaging.topic;
 
 public class TopicMessage {
     String type;

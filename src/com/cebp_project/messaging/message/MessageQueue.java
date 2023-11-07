@@ -1,4 +1,4 @@
-package message;
+package com.cebp_project.messaging.message;
 
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;

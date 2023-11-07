@@ -1,4 +1,4 @@
-package topic;
+package com.cebp_project.messaging.topic;
 
 import java.util.ArrayList;
 import java.util.Iterator;
