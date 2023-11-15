@@ -1,15 +1,12 @@
 package com.cebp_project.messaging.server;
 
 import com.cebp_project.messaging.message.MessageQueue;
-import com.cebp_project.messaging.topic.Topic;
 
 public class Server implements Runnable {
-    private MessageQueue messageQueue;
-    private Topic topic;
+    private final MessageQueue messageQueue;
 
-    public Server(MessageQueue messageQueue, Topic topic) {
+    public Server(MessageQueue messageQueue) {
         this.messageQueue = messageQueue;
-        this.topic = topic;
     }
 
     @Override

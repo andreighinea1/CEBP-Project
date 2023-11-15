@@ -1,14 +1,20 @@
 package com.cebp_project.messaging.message;
 
 public class Message {
+    String sender;
     String recipient;
     String content;
     long timestamp;
 
-    public Message(String recipient, String content, long timestamp) {
+    public Message(String sender, String recipient, String content, long timestamp) {
+        this.sender = sender;
         this.recipient = recipient;
         this.content = content;
         this.timestamp = timestamp;
+    }
+
+    public String getSender() {
+        return sender;
     }
 
     public String getRecipient() {
@@ -25,10 +31,6 @@ public class Message {
 
     @Override
     public String toString() {
-        return "Message{" +
-                "recipient='" + recipient + '\'' +
-                ", content='" + content + '\'' +
-                ", timestamp=" + timestamp +
-                '}';
+        return "Message from '" + sender + "' to '" + recipient + "': " + content + " [at " + timestamp + "]";
     }
 }

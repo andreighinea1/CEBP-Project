@@ -5,6 +5,18 @@ public class TopicMessage {
     String content;
     long timeout;
 
+    public String getType() {
+        return type;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public long getTimeout() {
+        return timeout;
+    }
+
     public TopicMessage(String type, String content, long timeout) {
         this.type = type;
         this.content = content;
@@ -13,10 +25,6 @@ public class TopicMessage {
 
     @Override
     public String toString() {
-        return "TopicMessage{" +
-                "type='" + type + '\'' +
-                ", content='" + content + '\'' +
-                ", timeout=" + timeout +
-                '}';
+        return type + ": " + content;
     }
 }
