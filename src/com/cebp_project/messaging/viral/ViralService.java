@@ -37,7 +37,7 @@ public class ViralService implements Runnable {
             //  only use RabbitMQ for the ViralService
             try {
                 newMessageSemaphore.acquire();
-                processBroadcastMessages();  // TODO: These 2 channels would be on separate threads
+                processBroadcastMessages();  // TODO: These 2 channels would be RabbitMQ channels
                 processTopicMessages();
                 displayTrendingHashtags();
                 newMessageSemaphore.drainPermits();
