@@ -2,6 +2,7 @@ package com.cebp_project.messaging.client;
 
 import com.cebp_project.messaging.message.Message;
 import com.cebp_project.messaging.message.MessageQueue;
+import com.cebp_project.messaging.server.Server;  // Import for the Server class
 import com.cebp_project.messaging.topic.TopicMessage;
 import com.cebp_project.messaging.topic.TopicOrchestrator;
 
@@ -10,16 +11,25 @@ import java.util.List;
 public class Client implements Runnable {
     private final String name;
     private final MessageQueue messageQueue;
+    private final Server server; // Added server reference
     private final List<String> otherClients;
 
-    public Client(String name, MessageQueue messageQueue, List<String> otherClients) {
+    public Client(String name, MessageQueue messageQueue, List<String> otherClients, Server server) {
         this.name = name;
         this.messageQueue = messageQueue;
         this.otherClients = otherClients;
+        this.server = server; // Initialize server
+    }
+
+    public void receiveMessage(Message message) {
+        // Handle received message
+        System.out.println(name + " received: " + message);
     }
 
     @Override
     public void run() {
+        server.registerClient(name, this); // Register client with the server
+
         try {
             // Sending mock messages with hashtags to other clients
             String[] mockMessages = {
