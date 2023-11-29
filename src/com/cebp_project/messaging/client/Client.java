@@ -9,6 +9,7 @@ import com.cebp_project.messaging.topic.TopicOrchestrator;
 import java.util.List;
 
 public class Client implements Runnable {
+    // TODO: Make a main method to start all clients in separate processes
     private final String name;
     private final MessageQueue messageQueue;
     private final Server server;

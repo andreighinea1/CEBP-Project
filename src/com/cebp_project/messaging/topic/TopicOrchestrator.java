@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class TopicOrchestrator {
+    // TODO: This will be in the same process as the Server
     private static final TopicOrchestrator instance = new TopicOrchestrator(5000);
     private final ConcurrentHashMap<String, ConcurrentLinkedQueue<TopicMessage>> topicMessages;
     private final long maxTimeout;

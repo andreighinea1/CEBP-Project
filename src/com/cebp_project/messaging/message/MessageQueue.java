@@ -1,16 +1,15 @@
 package com.cebp_project.messaging.message;
 
-import com.cebp_project.messaging.topic.TopicMessage;
 import com.cebp_project.messaging.viral.ViralService;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MessageQueue {
+    // TODO: This will be in the same process as the Server
     private static final MessageQueue instance = new MessageQueue(100);
     private final BlockingQueue<Message> queue;
 

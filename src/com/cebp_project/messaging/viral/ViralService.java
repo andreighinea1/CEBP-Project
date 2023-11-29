@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ViralService implements Runnable {
+    // TODO: Make a main method to start this in a separate "admin" process
     private static final ViralService instance = new ViralService();
     private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Integer> topicHashtagCounts = new ConcurrentHashMap<>();
@@ -34,7 +35,7 @@ public class ViralService implements Runnable {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 newMessageSemaphore.acquire();
-                processBroadcastMessages();
+                processBroadcastMessages();  // TODO: These 2 channels would be on separate threads
                 processTopicMessages();
                 displayTrendingHashtags();
                 newMessageSemaphore.drainPermits();
