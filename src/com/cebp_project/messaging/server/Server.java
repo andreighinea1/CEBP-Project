@@ -1,9 +1,9 @@
 package com.cebp_project.messaging.server;
 
-import com.cebp_project.messaging.message.MessageQueue;
-import com.cebp_project.messaging.message.Message;
 import com.cebp_project.messaging.client.Client;
-import java.util.List;
+import com.cebp_project.messaging.message.Message;
+import com.cebp_project.messaging.message.MessageQueue;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

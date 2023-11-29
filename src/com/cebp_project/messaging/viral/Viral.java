@@ -1,6 +1,7 @@
 package com.cebp_project.messaging.viral;
 
-import com.cebp_project.messaging.message.*;
+import com.cebp_project.messaging.message.Message;
+import com.cebp_project.messaging.message.MessageQueue;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -50,4 +51,3 @@ public class Viral implements Runnable {
                 .forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue()));
     }
 }
-
