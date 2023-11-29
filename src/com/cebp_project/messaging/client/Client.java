@@ -21,10 +21,17 @@ public class Client implements Runnable {
     @Override
     public void run() {
         try {
-            // Sending messages to other clients
-            for (String clientName : otherClients) {
-                if (!clientName.equals(this.name)) {
-                    messageQueue.sendMessage(new Message(this.name, clientName, "Hello from " + name, System.currentTimeMillis()));
+            // Sending mock messages with hashtags to other clients
+            String[] mockMessages = {
+                    "Hello from " + name + " #welcome",
+                    "Enjoying Java programming #java #coding"
+            };
+
+            for (String messageContent : mockMessages) {
+                for (String clientName : otherClients) {
+                    if (!clientName.equals(this.name)) {
+                        messageQueue.sendMessage(new Message(this.name, clientName, messageContent, System.currentTimeMillis()));
+                    }
                 }
             }
 
