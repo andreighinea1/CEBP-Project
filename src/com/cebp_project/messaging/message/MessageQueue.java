@@ -1,6 +1,7 @@
 package com.cebp_project.messaging.message;
 
 import com.cebp_project.messaging.topic.TopicMessage;
+import com.cebp_project.messaging.viral.ViralService;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,15 +11,20 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MessageQueue {
+    private static final MessageQueue instance = new MessageQueue(100);
     private final BlockingQueue<Message> queue;
 
-    public MessageQueue(int maxSize) {
+    private MessageQueue(int maxSize) {
         this.queue = new LinkedBlockingQueue<>(maxSize);
+    }
+
+    public static MessageQueue getInstance() {
+        return instance;
     }
 
     public void sendMessage(Message message) throws IllegalStateException {
         queue.add(message);
-        viralService.notifyNewMessage(); // Notify the Viral service
+        ViralService.getInstance().notifyNewMessage(); // Notify the Viral service
     }
 
     public Message receiveMessage(String recipient) {

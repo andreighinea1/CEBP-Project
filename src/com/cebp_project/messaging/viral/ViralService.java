@@ -14,14 +14,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ViralService implements Runnable {
+    private static final ViralService instance = new ViralService();
     private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Integer> topicHashtagCounts = new ConcurrentHashMap<>();
-    private final MessageQueue messageQueue;
     private final Set<Message> processedMessages = ConcurrentHashMap.newKeySet();
     private final Semaphore newMessageSemaphore = new Semaphore(0);  // Used to indicate new messages
 
-    public ViralService(MessageQueue messageQueue) {
-        this.messageQueue = messageQueue;
+    public static ViralService getInstance() {
+        return instance;
     }
 
     public void notifyNewMessage() {
@@ -36,6 +36,7 @@ public class ViralService implements Runnable {
                 processBroadcastMessages();
                 processTopicMessages();
                 displayTrendingHashtags();
+                newMessageSemaphore.drainPermits();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -43,7 +44,7 @@ public class ViralService implements Runnable {
     }
 
     private void processBroadcastMessages() {
-        for (Message message : messageQueue.getAllMessages()) {
+        for (Message message : MessageQueue.getInstance().getAllMessages()) {
             if (!processedMessages.contains(message)) {
                 extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
                 processedMessages.add(message);

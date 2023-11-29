@@ -1,5 +1,7 @@
 package com.cebp_project.messaging.topic;
 
+import com.cebp_project.messaging.viral.ViralService;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +20,7 @@ public class TopicOrchestrator {
 
     public static void publishMessage(TopicMessage message) {
         instance.topicMessages.computeIfAbsent(message.getType(), k -> new ConcurrentLinkedQueue<>()).add(message);
-        viralService.notifyNewMessage(); // Notify the Viral service
+        ViralService.getInstance().notifyNewMessage(); // Notify the Viral service
     }
 
     public static List<TopicMessage> readMessages(String type) {

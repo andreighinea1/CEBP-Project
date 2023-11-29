@@ -8,12 +8,9 @@ import java.util.List;
 
 public class MessagingServer {
     public static void main(String[] args) {
-        MessageQueue messageQueue = new MessageQueue(100);
-        Thread viralThread = new Thread(new ViralService(messageQueue));
-        viralThread.start();
-
         List<String> clientNames = Arrays.asList("Client 1", "Client 2", "Client 3");
 
+        MessageQueue messageQueue = MessageQueue.getInstance();
         Server server = new Server(messageQueue);
         Thread serverThread = new Thread(server);
         serverThread.start();
@@ -24,5 +21,8 @@ public class MessagingServer {
             Thread clientThread = new Thread(client);
             clientThread.start();
         }
+
+        Thread viralThread = new Thread(ViralService.getInstance());
+        viralThread.start();
     }
 }
