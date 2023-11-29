@@ -33,6 +33,8 @@ public class ViralService implements Runnable {
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
+            // TODO: Duplicate msg for the viral service,
+            //  only use RabbitMQ for the ViralService
             try {
                 newMessageSemaphore.acquire();
                 processBroadcastMessages();  // TODO: These 2 channels would be on separate threads
