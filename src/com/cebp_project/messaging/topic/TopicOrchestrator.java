@@ -18,6 +18,7 @@ public class TopicOrchestrator {
 
     public static void publishMessage(TopicMessage message) {
         instance.topicMessages.computeIfAbsent(message.getType(), k -> new ConcurrentLinkedQueue<>()).add(message);
+        viralService.notifyNewMessage(); // Notify the Viral service
     }
 
     public static List<TopicMessage> readMessages(String type) {

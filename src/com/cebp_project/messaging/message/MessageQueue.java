@@ -1,7 +1,12 @@
 package com.cebp_project.messaging.message;
 
+import com.cebp_project.messaging.topic.TopicMessage;
+
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MessageQueue {
@@ -13,6 +18,7 @@ public class MessageQueue {
 
     public void sendMessage(Message message) throws IllegalStateException {
         queue.add(message);
+        viralService.notifyNewMessage(); // Notify the Viral service
     }
 
     public Message receiveMessage(String recipient) {
@@ -25,6 +31,10 @@ public class MessageQueue {
             }
         }
         return null;
+    }
+
+    public List<Message> getAllMessages() {
+        return new ArrayList<>(queue);
     }
 
     public Message poll() {

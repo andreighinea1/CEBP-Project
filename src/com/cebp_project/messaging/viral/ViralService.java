@@ -7,27 +7,35 @@ import com.cebp_project.messaging.topic.TopicOrchestrator;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Viral implements Runnable {
+public class ViralService implements Runnable {
     private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Integer> topicHashtagCounts = new ConcurrentHashMap<>();
     private final MessageQueue messageQueue;
+    private final Set<Message> processedMessages = ConcurrentHashMap.newKeySet();
+    private final Semaphore newMessageSemaphore = new Semaphore(0);  // Used to indicate new messages
 
-    public Viral(MessageQueue messageQueue) {
+    public ViralService(MessageQueue messageQueue) {
         this.messageQueue = messageQueue;
+    }
+
+    public void notifyNewMessage() {
+        newMessageSemaphore.release();
     }
 
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
-            processBroadcastMessages();
-            processTopicMessages();
-            displayTrendingHashtags();
             try {
-                Thread.sleep(5000); // Refresh every 5 seconds
+                newMessageSemaphore.acquire();
+                processBroadcastMessages();
+                processTopicMessages();
+                displayTrendingHashtags();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -35,14 +43,15 @@ public class Viral implements Runnable {
     }
 
     private void processBroadcastMessages() {
-        Message message;
-        while ((message = messageQueue.poll()) != null) {
-            extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
+        for (Message message : messageQueue.getAllMessages()) {
+            if (!processedMessages.contains(message)) {
+                extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
+                processedMessages.add(message);
+            }
         }
     }
 
     private void processTopicMessages() {
-        // Assuming TopicOrchestrator has a method to retrieve all messages
         List<TopicMessage> topicMessages = TopicOrchestrator.getAllMessages();
         for (TopicMessage message : topicMessages) {
             extractAndCountHashtags(message.getContent(), topicHashtagCounts);
@@ -70,4 +79,3 @@ public class Viral implements Runnable {
                 .forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue()));
     }
 }
-
