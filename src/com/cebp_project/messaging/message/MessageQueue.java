@@ -27,6 +27,11 @@ public class MessageQueue {
         return null;
     }
 
+    // Exposing the poll method of the BlockingQueue
+    public Message poll() {
+        return queue.poll();
+    }
+
     public int size() {
         return queue.size();
     }
