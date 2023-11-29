@@ -68,8 +68,12 @@ public class ViralService implements Runnable {
     }
 
     private void displayTrendingHashtags() {
-        displayHashtagCounts("Broadcast", broadcastHashtagCounts);
-        displayHashtagCounts("Topic", topicHashtagCounts);
+        if (!broadcastHashtagCounts.isEmpty()) {
+            displayHashtagCounts("Broadcast", broadcastHashtagCounts);
+        }
+        if (!topicHashtagCounts.isEmpty()) {
+            displayHashtagCounts("Topic", topicHashtagCounts);
+        }
     }
 
     private void displayHashtagCounts(String messageType, ConcurrentHashMap<String, Integer> hashtagCounts) {
