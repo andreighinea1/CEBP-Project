@@ -3,12 +3,12 @@ package com.cebp_project.messaging.topic;
 public class TopicMessage {
     String type;
     String content;
-    long timeout;
+    private final long sentTime;
 
-    public TopicMessage(String type, String content, long timeout) {
+    public TopicMessage(String type, String content) {
         this.type = type;
         this.content = content;
-        this.timeout = timeout;
+        this.sentTime = System.currentTimeMillis();
     }
 
     public String getType() {
@@ -19,8 +19,8 @@ public class TopicMessage {
         return content;
     }
 
-    public long getTimeout() {
-        return timeout;
+    public long getSentTime() {
+        return sentTime;
     }
 
     @Override

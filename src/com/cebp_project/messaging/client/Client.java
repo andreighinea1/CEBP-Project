@@ -56,8 +56,13 @@ public class Client implements Runnable {
                 }
             }
 
+            // Publish topic messages
+            TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
+//            Thread.sleep(3500);  // With this the msg won't expire
+            Thread.sleep(4500);  // With this the msg will expire
+
             // Publish a message to the topic
-            TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name, 1000));
+            TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name));
 
             // Simulate a delay for listening to topic
             Thread.sleep(1000);

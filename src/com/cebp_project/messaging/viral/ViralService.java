@@ -18,6 +18,7 @@ public class ViralService implements Runnable {
     private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Integer> topicHashtagCounts = new ConcurrentHashMap<>();
     private final Set<Message> processedMessages = ConcurrentHashMap.newKeySet();
+    private final Set<TopicMessage> processedTopicMessages = ConcurrentHashMap.newKeySet();
     private final Semaphore newMessageSemaphore = new Semaphore(0);  // Used to indicate new messages
 
     public static ViralService getInstance() {
@@ -55,7 +56,10 @@ public class ViralService implements Runnable {
     private void processTopicMessages() {
         List<TopicMessage> topicMessages = TopicOrchestrator.getAllMessages();
         for (TopicMessage message : topicMessages) {
-            extractAndCountHashtags(message.getContent(), topicHashtagCounts);
+            if (!processedTopicMessages.contains(message)) {
+                extractAndCountHashtags(message.getContent(), topicHashtagCounts);
+                processedTopicMessages.add(message);
+            }
         }
     }
 

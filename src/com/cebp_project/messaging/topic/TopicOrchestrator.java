@@ -50,7 +50,7 @@ public class TopicOrchestrator {
 
                     long currentTime = System.currentTimeMillis();
                     instance.topicMessages.forEach((type, queue) -> {
-                        queue.removeIf(message -> currentTime - message.getTimeout() > instance.maxTimeout);
+                        queue.removeIf(message -> currentTime - message.getSentTime() > instance.maxTimeout);
                     });
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
