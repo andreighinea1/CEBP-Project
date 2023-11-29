@@ -1,16 +1,7 @@
-
-
 import com.cebp_project.messaging.client.Client;
 import com.cebp_project.messaging.message.MessageQueue;
 import com.cebp_project.messaging.server.Server;
 import com.cebp_project.messaging.viral.Viral;
-
-import java.util.Arrays;
-import java.util.List;
-
-import com.cebp_project.messaging.client.Client;
-import com.cebp_project.messaging.message.MessageQueue;
-import com.cebp_project.messaging.server.Server;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +11,7 @@ public class MessagingServer {
         MessageQueue messageQueue = new MessageQueue(100);
         List<String> clientNames = Arrays.asList("Client 1", "Client 2", "Client 3");
 
-        Server server = new Server(messageQueue, clientNames);
+        Server server = new Server(messageQueue);
         Thread serverThread = new Thread(server);
         serverThread.start();
 

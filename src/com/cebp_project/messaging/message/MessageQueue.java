@@ -14,12 +14,10 @@ public class MessageQueue {
     public void sendMessage(Message message) throws IllegalStateException {
         queue.add(message);
     }
+
     public Message pollViralMessage() {
         return queue.poll();
     }
-    // In MessageQueue.java
-
-
 
     public Message receiveMessage(String recipient) {
         Iterator<Message> iterator = queue.iterator();
@@ -33,7 +31,6 @@ public class MessageQueue {
         return null;
     }
 
-    // Exposing the poll method of the BlockingQueue
     public Message poll() {
         return queue.poll();
     }

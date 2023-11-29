@@ -11,32 +11,25 @@ public class Server implements Runnable {
     private final MessageQueue messageQueue;
     private final Map<String, Client> clients;
 
-    public Server(MessageQueue messageQueue, List<String> clientNames) {
+    public Server(MessageQueue messageQueue) {
         this.messageQueue = messageQueue;
         this.clients = new ConcurrentHashMap<>();
-        // Removed the initial population with null values
     }
 
     public void registerClient(String name, Client client) {
-        clients.put(name, client); // Clients are added here when they register
+        clients.put(name, client);
     }
 
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
-            try {
-                Message message = messageQueue.poll(); // Use poll instead of take to avoid blocking
-                if (message != null) {
-                    String recipient = message.getRecipient();
-                    Client recipientClient = clients.get(recipient);
-                    if (recipientClient != null) {
-                        recipientClient.receiveMessage(message);
-                    }
+            Message message = messageQueue.poll(); // Use poll instead of take to avoid blocking
+            if (message != null) {
+                String recipient = message.getRecipient();
+                Client recipientClient = clients.get(recipient);
+                if (recipientClient != null) {
+                    recipientClient.receiveMessage(message);
                 }
-                // Simulate a delay
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
             }
         }
     }

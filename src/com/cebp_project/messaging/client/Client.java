@@ -11,14 +11,14 @@ import java.util.List;
 public class Client implements Runnable {
     private final String name;
     private final MessageQueue messageQueue;
-    private final Server server; // Added server reference
+    private final Server server;
     private final List<String> otherClients;
 
     public Client(String name, MessageQueue messageQueue, List<String> otherClients, Server server) {
         this.name = name;
         this.messageQueue = messageQueue;
         this.otherClients = otherClients;
-        this.server = server; // Initialize server
+        this.server = server;
     }
 
     public void receiveMessage(Message message) {
