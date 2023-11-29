@@ -24,6 +24,14 @@ public class TopicOrchestrator {
         return new ArrayList<>(instance.topicMessages.getOrDefault(type, new ConcurrentLinkedQueue<>()));
     }
 
+    public static List<TopicMessage> getAllMessages() {
+        List<TopicMessage> allMessages = new ArrayList<>();
+        for (ConcurrentLinkedQueue<TopicMessage> queue : instance.topicMessages.values()) {
+            allMessages.addAll(queue);
+        }
+        return allMessages;
+    }
+
     public static int size(String type) {
         ConcurrentLinkedQueue<TopicMessage> queue = instance.topicMessages.get(type);
         return (queue != null) ? queue.size() : 0;

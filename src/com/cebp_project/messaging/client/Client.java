@@ -2,7 +2,7 @@ package com.cebp_project.messaging.client;
 
 import com.cebp_project.messaging.message.Message;
 import com.cebp_project.messaging.message.MessageQueue;
-import com.cebp_project.messaging.server.Server;  // Import for the Server class
+import com.cebp_project.messaging.server.Server;
 import com.cebp_project.messaging.topic.TopicMessage;
 import com.cebp_project.messaging.topic.TopicOrchestrator;
 

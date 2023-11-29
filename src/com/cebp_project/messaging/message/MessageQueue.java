@@ -15,10 +15,6 @@ public class MessageQueue {
         queue.add(message);
     }
 
-    public Message pollViralMessage() {
-        return queue.poll();
-    }
-
     public Message receiveMessage(String recipient) {
         Iterator<Message> iterator = queue.iterator();
         while (iterator.hasNext()) {
