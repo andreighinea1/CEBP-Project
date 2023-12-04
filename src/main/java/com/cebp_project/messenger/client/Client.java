@@ -69,7 +69,7 @@ public class Client implements Runnable {
 
             // Simulate a delay for listening to topic
             Thread.sleep(1000);  // TODO-deea-2: Add here a random delay instead of a fixed one
-
+            //  test
             // Listening to the topic
             List<TopicMessage> topicMessages = TopicOrchestrator.readMessages("commonTopic");
             System.out.println(name + " reads from topic: " + topicMessages);
