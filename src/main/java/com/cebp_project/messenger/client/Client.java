@@ -60,6 +60,7 @@ public class Client implements Runnable {
                 }
             }
 
+
             // Publish topic messages
             TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
 //            Thread.sleep(3500);  // The msg won't expire  // TODO-deea-2: Here should be random between 0 and 3500
