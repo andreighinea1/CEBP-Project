@@ -9,6 +9,9 @@ import com.cebp_project.messaging.topic.TopicOrchestrator;
 import java.util.List;
 
 public class Client implements Runnable {
+    // TODO-all-last: You may all need to modify this class, leave it for the last,
+    //  and tell ChatGPT to modify the examples accordingly after your changes in other classes
+
     private final String name;
     private final MessageQueue messageQueue;
     private final Server server;
@@ -46,7 +49,7 @@ public class Client implements Runnable {
             }
 
             // Simulate a delay for sending messages
-            Thread.sleep(1000);
+            Thread.sleep(1000);  // TODO-deea-2: Add here a random delay instead of a fixed one
 
             // Receiving messages
             for (int i = 0; i < otherClients.size() - 1; i++) {
@@ -58,14 +61,14 @@ public class Client implements Runnable {
 
             // Publish topic messages
             TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
-//            Thread.sleep(3500);  // With this the msg won't expire
-            Thread.sleep(4500);  // With this the msg will expire
+//            Thread.sleep(3500);  // The msg won't expire  // TODO-deea-2: Here should be random between 0 and 3500
+            Thread.sleep(4500);  // The msg will expire  // TODO-deea-2: Here like 4500 + random(...)
 
             // Publish a message to the topic
             TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name));
 
             // Simulate a delay for listening to topic
-            Thread.sleep(1000);
+            Thread.sleep(1000);  // TODO-deea-2: Add here a random delay instead of a fixed one
 
             // Listening to the topic
             List<TopicMessage> topicMessages = TopicOrchestrator.readMessages("commonTopic");

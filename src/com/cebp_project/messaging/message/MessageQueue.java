@@ -9,7 +9,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MessageQueue {
-    // TODO: This will be in the same process as the Server
     private static final MessageQueue instance = new MessageQueue(100);
     private final BlockingQueue<Message> queue;
 

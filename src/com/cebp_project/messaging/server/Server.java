@@ -8,13 +8,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server implements Runnable {
-    // TODO: Make a main method to start this in a separate process,
-    //  which would include the message and topic queues
-    private final MessageQueue messageQueue;
     private final Map<String, Client> clients;
 
-    public Server(MessageQueue messageQueue) {
-        this.messageQueue = messageQueue;
+    public Server() {
         this.clients = new ConcurrentHashMap<>();
     }
 
@@ -25,9 +21,9 @@ public class Server implements Runnable {
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
-            // TODO: This should also handle the topics
+            // TODO-ale-2: This should also handle topic messages from TopicOrchestrator (done in a similar way)
 
-            Message message = messageQueue.poll(); // Use poll instead of take to avoid blocking
+            Message message = MessageQueue.getInstance().poll(); // Use poll instead of take to avoid blocking
             if (message != null) {
                 String recipient = message.getRecipient();
                 Client recipientClient = clients.get(recipient);

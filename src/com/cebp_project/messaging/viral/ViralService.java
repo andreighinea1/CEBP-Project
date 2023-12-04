@@ -14,7 +14,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ViralService implements Runnable {
-    // TODO: Make a main method to start this in a separate "admin" process
+    // TODO-bia-1: Don't use semaphores anymore, just duplicate the msg and send it to RabbitMQ
+    //  NOTE: Only use RabbitMQ for the connection between the Server and ViralService
+
+    // TODO-ale-1: Make a DTO for transferring messages in the MessageQueue,
+    //  and another one for the ones in TopicOrchestrator (this will be used to communicate with RabbitMQ)
+
+    // TODO-deea-1: Make a main method to start this in a separate "admin" process
+
     private static final ViralService instance = new ViralService();
     private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Integer> topicHashtagCounts = new ConcurrentHashMap<>();
@@ -33,11 +40,9 @@ public class ViralService implements Runnable {
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
-            // TODO: Duplicate msg for the viral service,
-            //  only use RabbitMQ for the ViralService
             try {
                 newMessageSemaphore.acquire();
-                processBroadcastMessages();  // TODO: These 2 channels would be RabbitMQ channels
+                processBroadcastMessages();  // TODO-bia-2: These 2 channels would be RabbitMQ channels
                 processTopicMessages();
                 displayTrendingHashtags();
                 newMessageSemaphore.drainPermits();
