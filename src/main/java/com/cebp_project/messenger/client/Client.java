@@ -50,7 +50,7 @@ public class Client implements Runnable {
                 }
             }
             // Simulate a delay for sending messages
-            Thread.sleep(1000);  // TODO-deea-2: Add here a random delay instead of a fixed one
+            Thread.sleep(new Random().nextInt(1000));
 
             // Receiving messages
             for (int i = 0; i < otherClients.size() - 1; i++) {
