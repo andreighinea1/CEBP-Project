@@ -60,7 +60,6 @@ public class Client implements Runnable {
                 }
             }
 
-
             // Publish topic messages
             Thread.sleep(new Random().nextInt(3500));
             TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
