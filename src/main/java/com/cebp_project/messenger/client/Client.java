@@ -62,9 +62,10 @@ public class Client implements Runnable {
 
 
             // Publish topic messages
+            Thread.sleep(new Random().nextInt(3500));
             TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
-//            Thread.sleep(3500);  // The msg won't expire  // TODO-deea-2: Here should be random between 0 and 3500
-            Thread.sleep(4500);  // The msg will expire  // TODO-deea-2: Here like 4500 + random(...)
+
+            Thread.sleep(4500 + new Random().nextInt(1000));  // The msg will expire
 
             // Publish a message to the topic
             TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name));
