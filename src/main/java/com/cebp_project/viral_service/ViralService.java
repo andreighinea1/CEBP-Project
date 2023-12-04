@@ -5,7 +5,12 @@ import com.cebp_project.messenger.message.Message;
 import com.cebp_project.messenger.message.MessageQueue;
 import com.cebp_project.messenger.topic.TopicMessage;
 import com.cebp_project.messenger.topic.TopicOrchestrator;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.DeliverCallback;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,46 +35,111 @@ public class ViralService implements Runnable {
     private final Set<TopicMessage> processedTopicMessages = ConcurrentHashMap.newKeySet();
     private final Semaphore newMessageSemaphore = new Semaphore(0);  // Used to indicate new messages
 
+    private final static String BROADCAST_QUEUE_NAME = "broadcast_queue";
+    private final static String TOPIC_QUEUE_NAME = "topic_queue";
+    private Connection connection;
+    private Channel channel;
+
+    private void setupRabbitMQ() throws Exception {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");  // Replace with the actual host
+        // factory.setUsername("username");  // Uncomment if you have username
+        // factory.setPassword("password");  // Uncomment if you have password
+        connection = factory.newConnection();
+        channel = connection.createChannel();
+
+        // Declare the queues
+        channel.queueDeclare(BROADCAST_QUEUE_NAME, false, false, false, null);
+        channel.queueDeclare(TOPIC_QUEUE_NAME, false, false, false, null);
+    }
     public static ViralService getInstance() {
         return instance;
     }
 
-    public void notifyNewMessage() {
-        newMessageSemaphore.release();
+
+    public void notifyNewMessage(Message message) throws IOException {
+        String messageJson = convertMessageToJson(message); // Serialize the message
+        channel.basicPublish("", BROADCAST_QUEUE_NAME, null, messageJson.getBytes());
     }
+
+    public void notifyNewTopicMessage(TopicMessage message) throws IOException {
+        String messageJson = convertTopicMessageToJson(message); // Serialize the message
+        channel.basicPublish("", TOPIC_QUEUE_NAME, null, messageJson.getBytes());
+    }
+
 
     @Override
     public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
+        try {
+            setupRabbitMQ();
+
+            DeliverCallback broadcastCallback = (consumerTag, delivery) -> {
+                String messageJson = new String(delivery.getBody(), "UTF-8");
+                Message message = convertJsonToMessage(messageJson); // Deserialize the message
+                processBroadcastMessage(message);
+            };
+            channel.basicConsume(BROADCAST_QUEUE_NAME, true, broadcastCallback, consumerTag -> {});
+
+            DeliverCallback topicCallback = (consumerTag, delivery) -> {
+                String messageJson = new String(delivery.getBody(), "UTF-8");
+                TopicMessage message = convertJsonToTopicMessage(messageJson); // Deserialize the message
+                processTopicMessage(message);
+            };
+            channel.basicConsume(TOPIC_QUEUE_NAME, true, topicCallback, consumerTag -> {});
+
+        } catch (Exception e) {
+            e.printStackTrace();
             try {
-                newMessageSemaphore.acquire();
-                processBroadcastMessages();  // TODO-bia-2: These 2 channels would be RabbitMQ channels
-                processTopicMessages();
-                displayTrendingHashtags();
-                newMessageSemaphore.drainPermits();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+                if (connection != null) connection.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
         }
     }
+    private String convertMessageToJson(Message message) {
+        // Implement serialization logic, possibly using a library like Gson or Jackson
+        return "";  // Placeholder
+    }
 
-    private void processBroadcastMessages() {
-        for (Message message : MessageQueue.getInstance().getAllMessages()) {
-            if (!processedMessages.contains(message)) {
-                extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
-                processedMessages.add(message);
-            }
+    private Message convertJsonToMessage(String json) {
+        // Implement deserialization logic
+        return new Message("senderId","recipientId","Hello, this is a message!",16);  // Placeholder
+    }
+
+    private String convertTopicMessageToJson(TopicMessage message) {
+        // Implement serialization logic
+        return "";  // Placeholder
+    }
+
+    private TopicMessage convertJsonToTopicMessage(String json) {
+        // Implement deserialization logic
+        return new TopicMessage("someTopicType","This is the content of the topic message.");  // Placeholder
+    }
+    public void stopService() {
+        try {
+            if (channel != null) channel.close();
+            if (connection != null) connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private void processTopicMessages() {
-        List<TopicMessage> topicMessages = TopicOrchestrator.getAllMessages();
-        for (TopicMessage message : topicMessages) {
-            if (!processedTopicMessages.contains(message)) {
-                extractAndCountHashtags(message.getContent(), topicHashtagCounts);
-                processedTopicMessages.add(message);
-            }
+
+
+    private void processBroadcastMessage(Message message) {
+        if (!processedMessages.contains(message)) {
+            extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
+            processedMessages.add(message);
         }
+        // Additional processing...
+    }
+
+    private void processTopicMessage(TopicMessage message) {
+        if (!processedTopicMessages.contains(message)) {
+            extractAndCountHashtags(message.getContent(), topicHashtagCounts);
+            processedTopicMessages.add(message);
+        }
+        // Additional processing...
     }
 
     private void extractAndCountHashtags(String content, ConcurrentHashMap<String, Integer> hashtagMap) {
