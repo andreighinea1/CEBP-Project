@@ -7,6 +7,7 @@ import com.cebp_project.messenger.topic.TopicMessage;
 import com.cebp_project.messenger.topic.TopicOrchestrator;
 
 import java.util.List;
+import java.util.Random;
 
 public class Client implements Runnable {
     // TODO-all-last: You may all need to modify this class, leave it for the last,
@@ -43,6 +44,8 @@ public class Client implements Runnable {
             for (String messageContent : mockMessages) {
                 for (String clientName : otherClients) {
                     if (!clientName.equals(this.name)) {
+                        // TODO-deea-2: Add here a random delay instead of a fixed one
+                        Thread.sleep(new Random().nextInt(1000)); // Random delay up to 1000 milliseconds
                         messageQueue.sendMessage(new Message(this.name, clientName, messageContent, System.currentTimeMillis()));
                     }
                 }
