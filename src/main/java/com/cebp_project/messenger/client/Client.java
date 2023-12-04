@@ -13,6 +13,7 @@ public class Client implements Runnable {
     // TODO-all-last: You may all need to modify this class, leave it for the last,
     //  and tell ChatGPT to modify the examples accordingly after your changes in other classes
 
+    // TODO-deea-1: Make a main method to start all clients in a separate process
     private final String name;
     private final MessageQueue messageQueue;
     private final Server server;

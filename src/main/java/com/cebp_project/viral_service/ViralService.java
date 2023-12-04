@@ -22,7 +22,7 @@ public class ViralService implements Runnable {
     // TODO-ale-1: Make a DTO for transferring messages in the MessageQueue,
     //  and another one for the ones in TopicOrchestrator (this will be used to communicate with RabbitMQ)
 
-    // TODO-deea-1: Make a main method to start this in a separate "admin" process
+
 
     private static final ViralService instance = new ViralService();
     private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts = new ConcurrentHashMap<>();
