@@ -1,5 +1,5 @@
 package com.cebp_project.viral_service;
-package com.cebp_project.messaging.viral;
+
 
 // TODO-ale-last?: After the RabbitMQ is implemented, all these imports should be removed, and the DTO should be used
 import com.cebp_project.messenger.message.Message;
