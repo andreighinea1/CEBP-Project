@@ -1,6 +1,6 @@
-package com.cebp_project.messaging.message;
+package com.cebp_project.messenger.message;
 
-import com.cebp_project.messaging.viral.ViralService;
+import com.cebp_project.viral_service.ViralService;
 
 import java.util.ArrayList;
 import java.util.Iterator;

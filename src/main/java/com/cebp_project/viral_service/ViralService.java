@@ -1,9 +1,10 @@
-package com.cebp_project.messaging.viral;
+package com.cebp_project.viral_service;
 
-import com.cebp_project.messaging.message.Message;
-import com.cebp_project.messaging.message.MessageQueue;
-import com.cebp_project.messaging.topic.TopicMessage;
-import com.cebp_project.messaging.topic.TopicOrchestrator;
+// TODO-ale-last?: After the RabbitMQ is implemented, all these imports should be removed, and the DTO should be used
+import com.cebp_project.messenger.message.Message;
+import com.cebp_project.messenger.message.MessageQueue;
+import com.cebp_project.messenger.topic.TopicMessage;
+import com.cebp_project.messenger.topic.TopicOrchestrator;
 
 import java.util.List;
 import java.util.Map;

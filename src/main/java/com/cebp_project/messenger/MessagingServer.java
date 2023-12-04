@@ -1,7 +1,8 @@
-import com.cebp_project.messaging.client.Client;
-import com.cebp_project.messaging.message.MessageQueue;
-import com.cebp_project.messaging.server.Server;
-import com.cebp_project.messaging.viral.ViralService;
+package com.cebp_project.messenger;
+
+import com.cebp_project.messenger.client.Client;
+import com.cebp_project.messenger.message.MessageQueue;
+import com.cebp_project.messenger.server.Server;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,8 +23,5 @@ public class MessagingServer {
             Thread clientThread = new Thread(client);
             clientThread.start();
         }
-
-        Thread viralThread = new Thread(ViralService.getInstance());
-        viralThread.start();
     }
 }

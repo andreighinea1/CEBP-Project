@@ -1,10 +1,10 @@
-package com.cebp_project.messaging.client;
+package com.cebp_project.messenger.client;
 
-import com.cebp_project.messaging.message.Message;
-import com.cebp_project.messaging.message.MessageQueue;
-import com.cebp_project.messaging.server.Server;
-import com.cebp_project.messaging.topic.TopicMessage;
-import com.cebp_project.messaging.topic.TopicOrchestrator;
+import com.cebp_project.messenger.message.Message;
+import com.cebp_project.messenger.message.MessageQueue;
+import com.cebp_project.messenger.server.Server;
+import com.cebp_project.messenger.topic.TopicMessage;
+import com.cebp_project.messenger.topic.TopicOrchestrator;
 
 import java.util.List;
 

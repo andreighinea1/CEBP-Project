@@ -1,4 +1,4 @@
-package com.cebp_project.messaging.message;
+package com.cebp_project.messenger.message;
 
 public class Message {
     String sender;
