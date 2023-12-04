@@ -6,6 +6,7 @@ import com.cebp_project.messenger.server.Server;
 import com.cebp_project.messenger.topic.TopicMessage;
 import com.cebp_project.messenger.topic.TopicOrchestrator;
 
+import java.io.IOException;
 import java.util.List;
 
 public class Client implements Runnable {
@@ -73,7 +74,7 @@ public class Client implements Runnable {
             // Listening to the topic
             List<TopicMessage> topicMessages = TopicOrchestrator.readMessages("commonTopic");
             System.out.println(name + " reads from topic: " + topicMessages);
-        } catch (InterruptedException | IllegalStateException e) {
+        } catch (InterruptedException | IllegalStateException | IOException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }

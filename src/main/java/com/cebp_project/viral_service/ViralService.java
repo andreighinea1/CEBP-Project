@@ -40,27 +40,39 @@ public class ViralService implements Runnable {
     private Connection connection;
     private Channel channel;
 
-    private void setupRabbitMQ() throws Exception {
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("localhost");  // Replace with the actual host
-        // factory.setUsername("username");  // Uncomment if you have username
-        // factory.setPassword("password");  // Uncomment if you have password
-        connection = factory.newConnection();
-        channel = connection.createChannel();
+    private void setupRabbitMQ() {
+        try {
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost("localhost");  // Replace with the actual host
+            // factory.setUsername("username");  // Uncomment if you have username
+            // factory.setPassword("password");  // Uncomment if you have password
+            connection = factory.newConnection();
+            channel = connection.createChannel();
 
-        // Declare the queues
-        channel.queueDeclare(BROADCAST_QUEUE_NAME, false, false, false, null);
-        channel.queueDeclare(TOPIC_QUEUE_NAME, false, false, false, null);
+            // Declare the queues
+            channel.queueDeclare(BROADCAST_QUEUE_NAME, false, false, false, null);
+            channel.queueDeclare(TOPIC_QUEUE_NAME, false, false, false, null);
+        } catch (Exception e) {
+            e.printStackTrace(); // Log the exception
+        }
     }
     public static ViralService getInstance() {
         return instance;
     }
 
 
+    // Overloaded method to handle TopicMessage
     public void notifyNewMessage(Message message) throws IOException {
-        String messageJson = convertMessageToJson(message); // Serialize the message
+        if (channel == null) {
+            setupRabbitMQ();  // Attempt to re-establish connection
+            if (channel == null) {
+                throw new IllegalStateException("RabbitMQ channel is not initialized.");
+            }
+        }
+        String messageJson = convertMessageToJson(message);
         channel.basicPublish("", BROADCAST_QUEUE_NAME, null, messageJson.getBytes());
     }
+
 
     public void notifyNewTopicMessage(TopicMessage message) throws IOException {
         String messageJson = convertTopicMessageToJson(message); // Serialize the message
