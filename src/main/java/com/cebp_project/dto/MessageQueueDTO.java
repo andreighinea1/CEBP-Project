@@ -1,9 +1,13 @@
 package com.cebp_project.dto;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.io.Serializable;
 
-public class MessageQueueDTO {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class MessageQueueDTO implements Serializable {
     @JsonProperty("sender")
     private String sender;
 
@@ -62,14 +66,34 @@ public class MessageQueueDTO {
     }
 
     // Method to serialize MessageQueueDTO to JSON
-    public String toJson() throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(this);
+    public String toJson() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     // Method to deserialize JSON to MessageQueueDTO
-    public static MessageQueueDTO fromJson(String json) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(json, MessageQueueDTO.class);
+    public static MessageQueueDTO fromJson(String json) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(json, MessageQueueDTO.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "MessageQueueDTO{" +
+                "sender='" + sender + '\'' +
+                ", recipient='" + recipient + '\'' +
+                ", content='" + content + '\'' +
+                ", timestamp=" + timestamp +
+                '}';
     }
 }
