@@ -14,31 +14,24 @@ public class MessageQueue {
     private final BlockingQueue<Message> queue;
     private final RabbitMQManager rabbitMQManager;
 
-    // Private constructor to handle exceptions from RabbitMQManager.getInstance()
-    private MessageQueue(int maxSize) {
+    private MessageQueue(int maxSize) throws IOException, TimeoutException {
         this.queue = new LinkedBlockingQueue<>(maxSize);
-        try {
-            this.rabbitMQManager = RabbitMQManager.getInstance();
-        } catch (IOException | TimeoutException e) {
-            throw new RuntimeException("Unable to initialize RabbitMQManager", e);
-        }
+        this.rabbitMQManager = RabbitMQManager.getInstance();
     }
 
-    // Static method for getting the singleton instance
-    public static synchronized MessageQueue getInstance() {
+    public static synchronized MessageQueue getInstance() throws IOException, TimeoutException {
         if (instance == null) {
             instance = new MessageQueue(100); // Default size for the queue
         }
         return instance;
     }
 
-    public void sendMessage(Message message) throws IllegalStateException {
-        queue.add(message);
-        try {
-            rabbitMQManager.publishMessage(message); // Publish to RabbitMQ
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to publish message", e);
+    public void sendMessage(Message message) throws IllegalStateException, IOException {
+        boolean added = queue.offer(message);
+        if (!added) {
+            throw new IllegalStateException("Message queue is full.");
         }
+        rabbitMQManager.publishMessage(message); // Publish to RabbitMQ
     }
 
     public Message receiveMessage(String recipient) {

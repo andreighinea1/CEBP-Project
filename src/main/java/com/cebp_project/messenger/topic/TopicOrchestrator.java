@@ -1,11 +1,9 @@
 package com.cebp_project.messenger.topic;
 
 import com.cebp_project.rabbitmq.RabbitMQManager;
-import com.cebp_project.messenger.topic.TopicMessage;
-
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeoutException;
@@ -16,45 +14,40 @@ public class TopicOrchestrator {
     private final long maxTimeout;
     private final RabbitMQManager rabbitMQManager;
 
-    private TopicOrchestrator(long maxTimeout) {
+    private TopicOrchestrator(long maxTimeout) throws IOException, TimeoutException {
         this.maxTimeout = maxTimeout;
         this.topicMessages = new ConcurrentHashMap<>();
-        try {
-            this.rabbitMQManager = RabbitMQManager.getInstance();
-        } catch (IOException | TimeoutException e) {
-            throw new RuntimeException("Unable to initialize RabbitMQManager", e);
-        }
+        this.rabbitMQManager = RabbitMQManager.getInstance();
         startGarbageCollector();
     }
 
-    public static synchronized TopicOrchestrator getInstance() {
+    public static synchronized TopicOrchestrator getInstance() throws IOException, TimeoutException {
         if (instance == null) {
-            instance = new TopicOrchestrator(5000); // Use the default timeout value you want for garbage collection
+            instance = new TopicOrchestrator(5000);
         }
         return instance;
     }
 
-    public static void publishMessage(TopicMessage message) throws IOException {
-        TopicOrchestrator orchestrator = getInstance();
-        orchestrator.topicMessages.computeIfAbsent(message.getType(), k -> new ConcurrentLinkedQueue<>()).add(message);
-        orchestrator.rabbitMQManager.publishTopicMessage(message); // Publish to RabbitMQ
+    public void publishMessage(TopicMessage message) throws IOException {
+        topicMessages.computeIfAbsent(message.getType(), k -> new ConcurrentLinkedQueue<>()).add(message);
+        rabbitMQManager.publishTopicMessage(message); // Publish to RabbitMQ
     }
 
-    public static List<TopicMessage> readMessages(String type) {
-        TopicOrchestrator orchestrator = getInstance();
-        return new ArrayList<>(orchestrator.topicMessages.getOrDefault(type, new ConcurrentLinkedQueue<>()));
+    public List<TopicMessage> readMessages(String type) {
+        ConcurrentLinkedQueue<TopicMessage> messages = topicMessages.getOrDefault(type, new ConcurrentLinkedQueue<>());
+        return new ArrayList<>(messages);
     }
 
-    public static List<TopicMessage> getAllMessages() {
-        TopicOrchestrator orchestrator = getInstance();
+    public List<TopicMessage> getAllMessages() {
         List<TopicMessage> allMessages = new ArrayList<>();
-        orchestrator.topicMessages.values().forEach(allMessages::addAll);
+        for (ConcurrentLinkedQueue<TopicMessage> queue : topicMessages.values()) {
+            allMessages.addAll(queue);
+        }
         return allMessages;
     }
 
-    public static int size(String type) {
-        TopicOrchestrator orchestrator = getInstance();
-        ConcurrentLinkedQueue<TopicMessage> queue = orchestrator.topicMessages.get(type);
+    public int size(String type) {
+        ConcurrentLinkedQueue<TopicMessage> queue = topicMessages.get(type);
         return (queue != null) ? queue.size() : 0;
     }
 

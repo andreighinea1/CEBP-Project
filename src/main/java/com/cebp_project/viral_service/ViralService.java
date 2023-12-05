@@ -4,24 +4,24 @@ import com.cebp_project.dto.MessageQueueDTO;
 import com.cebp_project.messenger.message.Message;
 import com.cebp_project.messenger.topic.TopicMessage;
 import com.cebp_project.rabbitmq.RabbitMQManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ViralService implements Runnable {
-    private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Integer> topicHashtagCounts = new ConcurrentHashMap<>();
-    private final Set<Message> processedMessages = ConcurrentHashMap.newKeySet();
-    private final Set<TopicMessage> processedTopicMessages = ConcurrentHashMap.newKeySet();
-
+    private static final Logger logger = LoggerFactory.getLogger(ViralService.class);
+    private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts;
+    private final ConcurrentHashMap<String, Integer> topicHashtagCounts;
     private final RabbitMQManager rabbitMQManager;
 
     public ViralService() throws IOException, TimeoutException {
+        this.broadcastHashtagCounts = new ConcurrentHashMap<>();
+        this.topicHashtagCounts = new ConcurrentHashMap<>();
         this.rabbitMQManager = RabbitMQManager.getInstance();
     }
 
@@ -30,8 +30,8 @@ public class ViralService implements Runnable {
         try {
             rabbitMQManager.consumeBroadcastMessages(this::processBroadcastMessageJson);
             rabbitMQManager.consumeTopicMessages(this::processTopicMessageJson);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            logger.error("Error consuming messages in ViralService", e);
         }
     }
 
@@ -52,6 +52,7 @@ public class ViralService implements Runnable {
     private Message convertJsonToMessage(String json) {
         MessageQueueDTO dto = MessageQueueDTO.fromJson(json);
         if (dto == null) {
+            logger.error("Failed to deserialize message from JSON");
             return null;
         }
         return new Message(dto.getSender(), dto.getRecipient(), dto.getContent(), dto.getTimestamp());
@@ -64,18 +65,12 @@ public class ViralService implements Runnable {
     }
 
     private void processBroadcastMessage(Message message) {
-        if (!processedMessages.contains(message)) {
-            extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
-            processedMessages.add(message);
-        }
+        extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
         // Additional processing...
     }
 
     private void processTopicMessage(TopicMessage message) {
-        if (!processedTopicMessages.contains(message)) {
-            extractAndCountHashtags(message.getContent(), topicHashtagCounts);
-            processedTopicMessages.add(message);
-        }
+        extractAndCountHashtags(message.getContent(), topicHashtagCounts);
         // Additional processing...
     }
 
@@ -97,18 +92,20 @@ public class ViralService implements Runnable {
     }
 
     private void displayHashtagCounts(String messageType, ConcurrentHashMap<String, Integer> hashtagCounts) {
-        System.out.println("Trending Hashtags in " + messageType + " Messages:");
+        logger.info("Trending Hashtags in {} Messages:", messageType);
         hashtagCounts.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(10) // Display top 10 hashtags
-                .forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue()));
+                .sorted((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()))
+                .limit(10)
+                .forEach(entry -> logger.info("{}: {}", entry.getKey(), entry.getValue()));
     }
 
     public void stopService() {
         try {
-            rabbitMQManager.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            if (rabbitMQManager != null) {
+                rabbitMQManager.close();
+            }
+        } catch (IOException | TimeoutException e) {
+            logger.error("Error closing RabbitMQManager", e);
         }
     }
 }
