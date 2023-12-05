@@ -2,6 +2,7 @@ package com.cebp_project.messenger.topic;
 
 import com.cebp_project.viral_service.ViralService;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,9 +19,9 @@ public class TopicOrchestrator {
         startGarbageCollector();
     }
 
-    public static void publishMessage(TopicMessage message) {
+    public static void publishMessage(TopicMessage message) throws IOException {
         instance.topicMessages.computeIfAbsent(message.getType(), k -> new ConcurrentLinkedQueue<>()).add(message);
-        ViralService.getInstance().notifyNewMessage(); // Notify the Viral service
+        ViralService.getInstance().notifyNewTopicMessage(message); // Notify the Viral service
     }
 
     public static List<TopicMessage> readMessages(String type) {

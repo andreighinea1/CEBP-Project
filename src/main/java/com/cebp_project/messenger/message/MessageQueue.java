@@ -2,6 +2,7 @@ package com.cebp_project.messenger.message;
 
 import com.cebp_project.viral_service.ViralService;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -20,9 +21,9 @@ public class MessageQueue {
         return instance;
     }
 
-    public void sendMessage(Message message) throws IllegalStateException {
+    public void sendMessage(Message message) throws IllegalStateException, IOException {
         queue.add(message);
-        ViralService.getInstance().notifyNewMessage(); // Notify the Viral service
+        ViralService.getInstance().notifyNewMessage(message); // Notify the Viral service
     }
 
     public Message receiveMessage(String recipient) {

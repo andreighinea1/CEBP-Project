@@ -36,10 +36,13 @@ public class RabbitMQManager {
         channel.queueDeclare(topicQueueName, false, false, false, null);
     }
 
-    public void publishMessage(Message message) throws IOException {
+    public void publishMessage(MessageQueueDTO message) throws IOException {
+        // Convert the MessageQueueDTO object to JSON
         String messageJson = objectMapper.writeValueAsString(message);
+        // Publish the message
         channel.basicPublish("", broadcastQueueName, null, messageJson.getBytes());
     }
+
 
     public void publishTopicMessage(TopicMessage message) throws IOException {
         String messageJson = objectMapper.writeValueAsString(message);

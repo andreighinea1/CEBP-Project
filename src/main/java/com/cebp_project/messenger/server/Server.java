@@ -42,7 +42,7 @@ public class Server implements Runnable {
             String recipient = message.getRecipient();
             Client recipientClient = clients.get(recipient);
             if (recipientClient != null) {
-                recipientClient.receiveMessage(message);
+                recipientClient.receiveMessage(message.getContent());
             }
         }
     }
@@ -54,7 +54,7 @@ public class Server implements Runnable {
             List<Client> subscribers = topicSubscribers.get(topicMessage.getType());
             if (subscribers != null) {
                 for (Client subscriber : subscribers) {
-                    subscriber.receiveTopicMessage(topicMessage);
+                    subscriber.receiveTopicMessage(topicMessage.getContent());
                 }
             }
         }

@@ -1,76 +1,118 @@
 package com.cebp_project.viral_service;
 
-
-// TODO-ale-last?: After the RabbitMQ is implemented, all these imports should be removed, and the DTO should be used
+import com.cebp_project.dto.MessageQueueDTO;
 import com.cebp_project.messenger.message.Message;
-import com.cebp_project.messenger.message.MessageQueue;
 import com.cebp_project.messenger.topic.TopicMessage;
-import com.cebp_project.messenger.topic.TopicOrchestrator;
+import com.cebp_project.rabbitmq.RabbitMQManager;
 
-import java.util.List;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ViralService implements Runnable {
-    // TODO-bia-1: Don't use semaphores anymore, just duplicate the msg and send it to RabbitMQ
-    //  NOTE: Only use RabbitMQ for the connection between the Server and ViralService
 
-    // TODO-ale-1: Make a DTO for transferring messages in the MessageQueue,
-    //  and another one for the ones in TopicOrchestrator (this will be used to communicate with RabbitMQ)
-
-
-
-    private static final ViralService instance = new ViralService();
     private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Integer> topicHashtagCounts = new ConcurrentHashMap<>();
     private final Set<Message> processedMessages = ConcurrentHashMap.newKeySet();
     private final Set<TopicMessage> processedTopicMessages = ConcurrentHashMap.newKeySet();
-    private final Semaphore newMessageSemaphore = new Semaphore(0);  // Used to indicate new messages
 
+    private final static String BROADCAST_QUEUE_NAME = "broadcast_queue";
+    private final static String TOPIC_QUEUE_NAME = "topic_queue";
+    private RabbitMQManager rabbitMQManager;
+
+    // Singleton instance
+    private static final ViralService instance = new ViralService();
+
+    // Private constructor to prevent instantiation
+    private ViralService() {
+    }
+
+    // Getter method for the singleton instance
     public static ViralService getInstance() {
         return instance;
     }
 
-    public void notifyNewMessage() {
-        newMessageSemaphore.release();
+    // New method to notify about new messages
+    public void notifyNewMessage(Message message) {
+        // Additional logic to handle new messages
+        // For example, you might want to update hashtag counts or perform other processing
+        processBroadcastMessage(message);
+    }
+
+    // New method to notify about new topic messages
+    public void notifyNewTopicMessage(TopicMessage topicMessage) {
+        // Additional logic to handle new topic messages
+        // For example, you might want to update hashtag counts or perform other processing
+        processTopicMessage(topicMessage);
     }
 
     @Override
     public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
-                newMessageSemaphore.acquire();
-                processBroadcastMessages();  // TODO-bia-2: These 2 channels would be RabbitMQ channels
-                processTopicMessages();
-                displayTrendingHashtags();
-                newMessageSemaphore.drainPermits();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+        try {
+            rabbitMQManager = new RabbitMQManager(BROADCAST_QUEUE_NAME, TOPIC_QUEUE_NAME);
+            rabbitMQManager.consumeMessages(BROADCAST_QUEUE_NAME, this::processBroadcastMessageJson);
+            rabbitMQManager.consumeMessages(TOPIC_QUEUE_NAME, this::processTopicMessageJson);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private void processBroadcastMessages() {
-        for (Message message : MessageQueue.getInstance().getAllMessages()) {
-            if (!processedMessages.contains(message)) {
-                extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
-                processedMessages.add(message);
-            }
+    private void processBroadcastMessageJson(String messageJson) {
+        Message message = convertJsonToMessage(messageJson);
+        if (message != null) {
+            processBroadcastMessage(message);
         }
     }
 
-    private void processTopicMessages() {
-        List<TopicMessage> topicMessages = TopicOrchestrator.getAllMessages();
-        for (TopicMessage message : topicMessages) {
-            if (!processedTopicMessages.contains(message)) {
-                extractAndCountHashtags(message.getContent(), topicHashtagCounts);
-                processedTopicMessages.add(message);
-            }
+    private void processTopicMessageJson(String messageJson) {
+        TopicMessage message = convertJsonToTopicMessage(messageJson);
+        if (message != null) {
+            processTopicMessage(message);
         }
+    }
+
+    private Message convertJsonToMessage(String json) {
+        MessageQueueDTO dto = MessageQueueDTO.fromJson(json);
+        if (dto == null) {
+            return null;
+        }
+        return new Message(dto.getSender(), dto.getRecipient(), dto.getContent(), dto.getTimestamp());
+    }
+
+    private TopicMessage convertJsonToTopicMessage(String json) {
+        // Implement deserialization logic for TopicMessage
+        // Placeholder - replace with actual implementation
+        return new TopicMessage("someTopicType", "This is the content of the topic message.");
+    }
+
+    public void stopService() {
+        try {
+            if (rabbitMQManager != null) {
+                rabbitMQManager.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void processBroadcastMessage(Message message) {
+        if (!processedMessages.contains(message)) {
+            extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
+            processedMessages.add(message);
+        }
+        // Additional processing...
+    }
+
+    private void processTopicMessage(TopicMessage message) {
+        if (!processedTopicMessages.contains(message)) {
+            extractAndCountHashtags(message.getContent(), topicHashtagCounts);
+            processedTopicMessages.add(message);
+        }
+        // Additional processing...
     }
 
     private void extractAndCountHashtags(String content, ConcurrentHashMap<String, Integer> hashtagMap) {
