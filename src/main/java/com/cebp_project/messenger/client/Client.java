@@ -71,10 +71,14 @@ public class Client implements Runnable {
     }
 
     private void publishAndListenToTopicMessages() throws InterruptedException {
+        // Publish topic messages
         TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
-        Thread.sleep(4500 + ThreadLocalRandom.current().nextInt(0, 1000));
+//            Thread.sleep(ThreadLocalRandom.current().nextInt(0, 3500));  // The msg won't expire
+        Thread.sleep(4500 + ThreadLocalRandom.current().nextInt(0, 1000));  // The msg will expire
 
+        // Publish a message to the topic
         TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name));
+        // Simulate a random delay for listening to topic
         Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 1500));
 
         List<TopicMessage> topicMessages = TopicOrchestrator.readMessages("commonTopic");
