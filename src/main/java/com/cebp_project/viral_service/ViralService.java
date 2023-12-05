@@ -19,19 +19,17 @@ public class ViralService implements Runnable {
     private final Set<Message> processedMessages = ConcurrentHashMap.newKeySet();
     private final Set<TopicMessage> processedTopicMessages = ConcurrentHashMap.newKeySet();
 
-    private final static String BROADCAST_QUEUE_NAME = "broadcast_queue";
-    private final static String TOPIC_QUEUE_NAME = "topic_queue";
     private final RabbitMQManager rabbitMQManager;
 
     public ViralService() throws IOException, TimeoutException {
-        rabbitMQManager = new RabbitMQManager(BROADCAST_QUEUE_NAME, TOPIC_QUEUE_NAME);
+        this.rabbitMQManager = RabbitMQManager.getInstance();
     }
 
     @Override
     public void run() {
         try {
-            rabbitMQManager.consumeMessages(BROADCAST_QUEUE_NAME, this::processBroadcastMessageJson);
-            rabbitMQManager.consumeMessages(TOPIC_QUEUE_NAME, this::processTopicMessageJson);
+            rabbitMQManager.consumeBroadcastMessages(this::processBroadcastMessageJson);
+            rabbitMQManager.consumeTopicMessages(this::processTopicMessageJson);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -63,14 +61,6 @@ public class ViralService implements Runnable {
         // Implement deserialization logic for TopicMessage
         // Placeholder - replace with actual implementation
         return new TopicMessage("someTopicType", "This is the content of the topic message.");
-    }
-
-    public void stopService() {
-        try {
-            rabbitMQManager.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private void processBroadcastMessage(Message message) {
@@ -112,5 +102,13 @@ public class ViralService implements Runnable {
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .limit(10) // Display top 10 hashtags
                 .forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue()));
+    }
+
+    public void stopService() {
+        try {
+            rabbitMQManager.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

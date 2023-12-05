@@ -11,42 +11,54 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 public class RabbitMQManager {
-    private final String broadcastQueueName;
-    private final String topicQueueName;
+    private static RabbitMQManager instance;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private Channel channel;
     private Connection connection;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public RabbitMQManager(String broadcastQueueName, String topicQueueName) throws IOException, TimeoutException {
-        this.broadcastQueueName = broadcastQueueName;
-        this.topicQueueName = topicQueueName;
+    private static final String BROADCAST_QUEUE_NAME = "broadcast_queue";
+    private static final String TOPIC_QUEUE_NAME = "topic_queue";
+
+    private RabbitMQManager() throws IOException, TimeoutException {
         setupRabbitMQ();
+    }
+
+    public static synchronized RabbitMQManager getInstance() throws IOException, TimeoutException {
+        if (instance == null) {
+            instance = new RabbitMQManager();
+        }
+        return instance;
     }
 
     private void setupRabbitMQ() throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("localhost"); // Replace with the actual host
-        // factory.setUsername("username");  // Uncomment if you have username
-        // factory.setPassword("password");  // Uncomment if you have password
+        factory.setHost("localhost");
         connection = factory.newConnection();
         channel = connection.createChannel();
 
-        // Declare the queues
-        channel.queueDeclare(broadcastQueueName, false, false, false, null);
-        channel.queueDeclare(topicQueueName, false, false, false, null);
+        channel.queueDeclare(BROADCAST_QUEUE_NAME, false, false, false, null);
+        channel.queueDeclare(TOPIC_QUEUE_NAME, false, false, false, null);
     }
 
     public void publishMessage(Message message) throws IOException {
         String messageJson = objectMapper.writeValueAsString(message);
-        channel.basicPublish("", broadcastQueueName, null, messageJson.getBytes());
+        channel.basicPublish("", BROADCAST_QUEUE_NAME, null, messageJson.getBytes());
     }
 
     public void publishTopicMessage(TopicMessage message) throws IOException {
         String messageJson = objectMapper.writeValueAsString(message);
-        channel.basicPublish("", topicQueueName, null, messageJson.getBytes());
+        channel.basicPublish("", TOPIC_QUEUE_NAME, null, messageJson.getBytes());
     }
 
-    public void consumeMessages(String queueName, Consumer<String> messageProcessor) throws IOException {
+    public void consumeBroadcastMessages(Consumer<String> messageProcessor) throws IOException {
+        consumeMessages(BROADCAST_QUEUE_NAME, messageProcessor);
+    }
+
+    public void consumeTopicMessages(Consumer<String> messageProcessor) throws IOException {
+        consumeMessages(TOPIC_QUEUE_NAME, messageProcessor);
+    }
+
+    private void consumeMessages(String queueName, Consumer<String> messageProcessor) throws IOException {
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
             String message = new String(delivery.getBody(), "UTF-8");
             messageProcessor.accept(message);
@@ -58,7 +70,4 @@ public class RabbitMQManager {
         if (channel != null) channel.close();
         if (connection != null) connection.close();
     }
-
-    // Helper methods for message conversion (if needed)
-    // ...
 }
