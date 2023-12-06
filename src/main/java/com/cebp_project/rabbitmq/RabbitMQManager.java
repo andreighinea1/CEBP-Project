@@ -1,8 +1,9 @@
 package com.cebp_project.rabbitmq;
 
+import com.cebp_project.dto.MessageQueueDTO;
+import com.cebp_project.dto.TopicMessageDTO;
 import com.cebp_project.messenger.message.Message;
 import com.cebp_project.messenger.topic.TopicMessage;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
@@ -19,12 +21,10 @@ public class RabbitMQManager {
     private static final String BROADCAST_QUEUE_NAME = "broadcast_queue";
     private static final String TOPIC_QUEUE_NAME = "topic_queue";
     private static RabbitMQManager instance;
-    private final ObjectMapper objectMapper;
     private Channel channel;
     private Connection connection;
 
     private RabbitMQManager() {
-        this.objectMapper = new ObjectMapper();
         setupRabbitMQ();
     }
 
@@ -54,18 +54,18 @@ public class RabbitMQManager {
     }
 
     public void publishMessage(Message message) throws IOException {
-        String messageJson = objectMapper.writeValueAsString(message);
+        String messageJson = MessageQueueDTO.fromMessage(message).toJson();
         channel.basicPublish("", BROADCAST_QUEUE_NAME, null, messageJson.getBytes());
     }
 
     public void publishTopicMessage(TopicMessage message) throws IOException {
-        String messageJson = objectMapper.writeValueAsString(message);
+        String messageJson = TopicMessageDTO.fromTopicMessage(message).toJson();
         channel.basicPublish("", TOPIC_QUEUE_NAME, null, messageJson.getBytes());
     }
 
     private void consumeMessages(String queueName, Consumer<String> messageProcessor) throws IOException {
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), "UTF-8");
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
             messageProcessor.accept(message);
         };
         channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {

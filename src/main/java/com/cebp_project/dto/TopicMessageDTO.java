@@ -1,5 +1,6 @@
 package com.cebp_project.dto;
 
+import com.cebp_project.messenger.topic.TopicMessage;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,12 +20,16 @@ public class TopicMessageDTO implements Serializable {
     private long sentTime;
 
     // Constructor
-    public TopicMessageDTO(@JsonProperty("type") String type,
-                           @JsonProperty("content") String content,
-                           @JsonProperty("sentTime") long sentTime) {
+    private TopicMessageDTO(@JsonProperty("type") String type,
+                            @JsonProperty("content") String content,
+                            @JsonProperty("sentTime") long sentTime) {
         this.type = type;
         this.content = content;
         this.sentTime = sentTime;
+    }
+
+    public static TopicMessageDTO fromTopicMessage(TopicMessage message) {
+        return new TopicMessageDTO(message.getType(), message.getContent(), message.getSentTime());
     }
 
     // Method to deserialize JSON to TopicMessageDTO

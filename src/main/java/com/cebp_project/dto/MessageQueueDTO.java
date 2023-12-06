@@ -1,5 +1,6 @@
 package com.cebp_project.dto;
 
+import com.cebp_project.messenger.message.Message;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,14 +23,18 @@ public class MessageQueueDTO implements Serializable {
     private long timestamp;
 
     // Constructor
-    public MessageQueueDTO(@JsonProperty("sender") String sender,
-                           @JsonProperty("recipient") String recipient,
-                           @JsonProperty("content") String content,
-                           @JsonProperty("timestamp") long timestamp) {
+    private MessageQueueDTO(@JsonProperty("sender") String sender,
+                            @JsonProperty("recipient") String recipient,
+                            @JsonProperty("content") String content,
+                            @JsonProperty("timestamp") long timestamp) {
         this.sender = sender;
         this.recipient = recipient;
         this.content = content;
         this.timestamp = timestamp;
+    }
+
+    public static MessageQueueDTO fromMessage(Message message) {
+        return new MessageQueueDTO(message.getSender(), message.getRecipient(), message.getContent(), message.getTimestamp());
     }
 
     // Method to deserialize JSON to MessageQueueDTO

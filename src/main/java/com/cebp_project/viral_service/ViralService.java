@@ -1,6 +1,7 @@
 package com.cebp_project.viral_service;
 
 import com.cebp_project.dto.MessageQueueDTO;
+import com.cebp_project.dto.TopicMessageDTO;
 import com.cebp_project.messenger.message.Message;
 import com.cebp_project.messenger.topic.TopicMessage;
 import com.cebp_project.rabbitmq.RabbitMQManager;
@@ -75,10 +76,14 @@ public class ViralService implements Runnable {
     }
 
     private TopicMessage convertJsonToTopicMessage(String json) {
-        // Implement deserialization logic for TopicMessage
-        // Placeholder - replace with actual implementation
-        return new TopicMessage("someTopicType", "This is the content of the topic message.");
+        TopicMessageDTO dto = TopicMessageDTO.fromJson(json);
+        if (dto == null) {
+            logger.error("Failed to deserialize topic message from JSON");
+            return null;
+        }
+        return new TopicMessage(dto.getType(), dto.getContent(), dto.getSentTime());
     }
+
 
     private void processBroadcastMessage(Message message) {
         extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);

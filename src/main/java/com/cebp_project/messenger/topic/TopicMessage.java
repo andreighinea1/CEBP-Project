@@ -11,6 +11,12 @@ public class TopicMessage {
         this.sentTime = System.currentTimeMillis();
     }
 
+    public TopicMessage(String type, String content, long sentTime) {
+        this.type = type;
+        this.content = content;
+        this.sentTime = sentTime;
+    }
+
     public String getType() {
         return type;
     }
