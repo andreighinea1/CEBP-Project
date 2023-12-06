@@ -1,9 +1,5 @@
 package com.cebp_project.messenger.message;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
-
 public class Message {
     String sender;
     String recipient;
@@ -16,7 +12,6 @@ public class Message {
         this.content = content;
         this.timestamp = timestamp;
     }
-
 
 
     public String getSender() {

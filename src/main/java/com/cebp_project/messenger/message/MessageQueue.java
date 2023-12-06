@@ -1,6 +1,7 @@
 package com.cebp_project.messenger.message;
 
 import com.cebp_project.rabbitmq.RabbitMQManager;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -27,11 +28,8 @@ public class MessageQueue {
     }
 
     public void sendMessage(Message message) throws IllegalStateException, IOException {
-        boolean added = queue.offer(message);
-        if (!added) {
-            throw new IllegalStateException("Message queue is full.");
-        }
-        rabbitMQManager.publishMessage(message); // Publish to RabbitMQ
+        queue.add(message);
+        rabbitMQManager.publishMessage(message); // Publish to ViralService's RabbitMQ
     }
 
     public Message receiveMessage(String recipient) {

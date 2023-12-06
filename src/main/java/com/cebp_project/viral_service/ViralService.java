@@ -19,7 +19,7 @@ public class ViralService implements Runnable {
     private final ConcurrentHashMap<String, Integer> topicHashtagCounts;
     private final RabbitMQManager rabbitMQManager;
 
-    public ViralService() throws IOException, TimeoutException {
+    public ViralService() {
         this.broadcastHashtagCounts = new ConcurrentHashMap<>();
         this.topicHashtagCounts = new ConcurrentHashMap<>();
         this.rabbitMQManager = RabbitMQManager.getInstance();

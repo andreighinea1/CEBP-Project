@@ -3,6 +3,7 @@ package com.cebp_project.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.io.Serializable;
 
@@ -31,21 +32,20 @@ public class MessageQueueDTO implements Serializable {
         this.timestamp = timestamp;
     }
 
+    // Method to deserialize JSON to MessageQueueDTO
+    public static MessageQueueDTO fromJson(String json) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(json, MessageQueueDTO.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // Getters
     public String getSender() {
         return sender;
-    }
-
-    public String getRecipient() {
-        return recipient;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
     }
 
     // Setters
@@ -53,12 +53,24 @@ public class MessageQueueDTO implements Serializable {
         this.sender = sender;
     }
 
+    public String getRecipient() {
+        return recipient;
+    }
+
     public void setRecipient(String recipient) {
         this.recipient = recipient;
     }
 
+    public String getContent() {
+        return content;
+    }
+
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
     }
 
     public void setTimestamp(long timestamp) {
@@ -70,17 +82,6 @@ public class MessageQueueDTO implements Serializable {
         try {
             ObjectMapper mapper = new ObjectMapper();
             return mapper.writeValueAsString(this);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    // Method to deserialize JSON to MessageQueueDTO
-    public static MessageQueueDTO fromJson(String json) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(json, MessageQueueDTO.class);
         } catch (IOException e) {
             e.printStackTrace();
             return null;

@@ -1,12 +1,12 @@
 package com.cebp_project.messenger.topic;
 
 import com.cebp_project.rabbitmq.RabbitMQManager;
+
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeoutException;
 
 public class TopicOrchestrator {
     private static TopicOrchestrator instance;
@@ -14,14 +14,14 @@ public class TopicOrchestrator {
     private final long maxTimeout;
     private final RabbitMQManager rabbitMQManager;
 
-    private TopicOrchestrator(long maxTimeout) throws IOException, TimeoutException {
+    private TopicOrchestrator(long maxTimeout) {
         this.maxTimeout = maxTimeout;
         this.topicMessages = new ConcurrentHashMap<>();
         this.rabbitMQManager = RabbitMQManager.getInstance();
         startGarbageCollector();
     }
 
-    public static synchronized TopicOrchestrator getInstance() throws IOException, TimeoutException {
+    public static synchronized TopicOrchestrator getInstance() {
         if (instance == null) {
             instance = new TopicOrchestrator(5000);
         }

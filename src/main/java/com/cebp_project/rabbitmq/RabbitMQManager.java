@@ -1,10 +1,12 @@
 package com.cebp_project.rabbitmq;
 
-import com.cebp_project.dto.MessageQueueDTO;
 import com.cebp_project.messenger.message.Message;
 import com.cebp_project.messenger.topic.TopicMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.*;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.DeliverCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,37 +16,41 @@ import java.util.function.Consumer;
 
 public class RabbitMQManager {
     private static final Logger logger = LoggerFactory.getLogger(RabbitMQManager.class);
+    private static final String BROADCAST_QUEUE_NAME = "broadcast_queue";
+    private static final String TOPIC_QUEUE_NAME = "topic_queue";
     private static RabbitMQManager instance;
     private final ObjectMapper objectMapper;
     private Channel channel;
     private Connection connection;
 
-    private static final String BROADCAST_QUEUE_NAME = "broadcast_queue";
-    private static final String TOPIC_QUEUE_NAME = "topic_queue";
-
-    private RabbitMQManager() throws IOException, TimeoutException {
+    private RabbitMQManager() {
         this.objectMapper = new ObjectMapper();
         setupRabbitMQ();
     }
 
-    public static synchronized RabbitMQManager getInstance() throws IOException, TimeoutException {
+    public static synchronized RabbitMQManager getInstance() {
         if (instance == null) {
             instance = new RabbitMQManager();
         }
         return instance;
     }
 
-    private void setupRabbitMQ() throws IOException, TimeoutException {
+    private void setupRabbitMQ() {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");  // Replace with the actual host
-        // factory.setUsername("username");  // Uncomment if you have username
-        // factory.setPassword("password");  // Uncomment if you have password
-        connection = factory.newConnection();
-        channel = connection.createChannel();
+        // factory.setUsername("username");
+        // factory.setPassword("password");
 
-        // Declare the queues
-        channel.queueDeclare(BROADCAST_QUEUE_NAME, false, false, false, null);
-        channel.queueDeclare(TOPIC_QUEUE_NAME, false, false, false, null);
+        try {
+            connection = factory.newConnection();
+            channel = connection.createChannel();
+
+            // Declare the queues
+            channel.queueDeclare(BROADCAST_QUEUE_NAME, false, false, false, null);
+            channel.queueDeclare(TOPIC_QUEUE_NAME, false, false, false, null);
+        } catch (IOException | TimeoutException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void publishMessage(Message message) throws IOException {
@@ -62,7 +68,8 @@ public class RabbitMQManager {
             String message = new String(delivery.getBody(), "UTF-8");
             messageProcessor.accept(message);
         };
-        channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {});
+        channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {
+        });
     }
 
     public void consumeBroadcastMessages(Consumer<String> messageProcessor) throws IOException {

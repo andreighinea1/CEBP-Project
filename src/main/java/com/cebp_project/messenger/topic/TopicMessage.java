@@ -1,9 +1,9 @@
 package com.cebp_project.messenger.topic;
 
 public class TopicMessage {
+    private final long sentTime;
     String type;
     String content;
-    private final long sentTime;
 
     public TopicMessage(String type, String content) {
         this.type = type;

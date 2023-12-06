@@ -66,17 +66,17 @@ public class Client implements Runnable {
             }
 
             // Publish topic messages
-            TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
+            TopicOrchestrator.getInstance().publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
 //            Thread.sleep(ThreadLocalRandom.current().nextInt(0, 3500));  // The msg won't expire
             Thread.sleep(4500 + ThreadLocalRandom.current().nextInt(0, 1000));  // The msg will expire
 
             // Publish a message to the topic
-            TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name));
+            TopicOrchestrator.getInstance().publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name));
             // Simulate a random delay for listening to topic
             Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 1500));
 
             // Listening to the topic
-            List<TopicMessage> topicMessages = TopicOrchestrator.readMessages("commonTopic");
+            List<TopicMessage> topicMessages = TopicOrchestrator.getInstance().readMessages("commonTopic");
             System.out.println(name + " reads from topic: " + topicMessages);
         } catch (InterruptedException | IllegalStateException | IOException e) {
             System.out.println("Error: " + e.getMessage());

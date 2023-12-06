@@ -6,10 +6,12 @@ import com.cebp_project.messenger.message.MessageQueue;
 import com.cebp_project.messenger.topic.TopicMessage;
 import com.cebp_project.messenger.topic.TopicOrchestrator;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 
 public class Server implements Runnable {
     private final Map<String, Client> clients;
@@ -31,12 +33,16 @@ public class Server implements Runnable {
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
-            processDirectMessages();
+            try {
+                processDirectMessages();
+            } catch (IOException | TimeoutException e) {
+                throw new RuntimeException(e);
+            }
             processTopicMessages();
         }
     }
 
-    private void processDirectMessages() {
+    private void processDirectMessages() throws IOException, TimeoutException {
         Message message = MessageQueue.getInstance().poll(); // Use poll instead of take to avoid blocking
         if (message != null) {
             String recipient = message.getRecipient();
@@ -49,7 +55,7 @@ public class Server implements Runnable {
 
     private void processTopicMessages() {
         // Handle topic messages from TopicOrchestrator
-        List<TopicMessage> allTopicMessages = TopicOrchestrator.getAllMessages();
+        List<TopicMessage> allTopicMessages = TopicOrchestrator.getInstance().getAllMessages();
         for (TopicMessage topicMessage : allTopicMessages) {
             List<Client> subscribers = topicSubscribers.get(topicMessage.getType());
             if (subscribers != null) {

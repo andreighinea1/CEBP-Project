@@ -3,6 +3,7 @@ package com.cebp_project.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.io.Serializable;
 
@@ -26,17 +27,20 @@ public class TopicMessageDTO implements Serializable {
         this.sentTime = sentTime;
     }
 
+    // Method to deserialize JSON to TopicMessageDTO
+    public static TopicMessageDTO fromJson(String json) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(json, TopicMessageDTO.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // Getters
     public String getType() {
         return type;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public long getSentTime() {
-        return sentTime;
     }
 
     // Setters
@@ -44,8 +48,16 @@ public class TopicMessageDTO implements Serializable {
         this.type = type;
     }
 
+    public String getContent() {
+        return content;
+    }
+
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public long getSentTime() {
+        return sentTime;
     }
 
     public void setSentTime(long sentTime) {
@@ -57,17 +69,6 @@ public class TopicMessageDTO implements Serializable {
         try {
             ObjectMapper mapper = new ObjectMapper();
             return mapper.writeValueAsString(this);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    // Method to deserialize JSON to TopicMessageDTO
-    public static TopicMessageDTO fromJson(String json) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(json, TopicMessageDTO.class);
         } catch (IOException e) {
             e.printStackTrace();
             return null;
