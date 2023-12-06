@@ -85,6 +85,7 @@ public class RabbitMQManager {
                 logger.debug("Message received from {}: {}", queueName, message);
                 messageProcessor.accept(message);
             };
+            logger.debug("Starting to consume messages from {}", queueName);
             channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {
             });
         } catch (IOException e) {
