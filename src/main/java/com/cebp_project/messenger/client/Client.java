@@ -5,7 +5,7 @@ import com.cebp_project.rabbitmq.RabbitMQManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.Scanner;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 public class Client implements Runnable {
@@ -32,16 +32,17 @@ public class Client implements Runnable {
         try {
             rabbitMQManager.consumeMessages("server_to_client_queue", this::receiveMessage);
 
-            Scanner scanner = new Scanner(System.in);
-            while (true) {
-                System.out.println("Enter message (or 'exit' to quit): ");
-                String input = scanner.nextLine();
-                if ("exit".equalsIgnoreCase(input)) {
-                    break;
-                }
-                sendMessage(input);
+            // Simulate sending messages from a predefined list
+            List<String> predefinedMessages = List.of("Hello", "How are you?", "Goodbye");
+
+            for (String message : predefinedMessages) {
+                sendMessage(message);
+                Thread.sleep(1000);  // Optional: Add a delay between sending messages
             }
-        } catch (IOException e) {
+
+            // Add more simulated messages as needed
+
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
