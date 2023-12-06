@@ -45,10 +45,17 @@ public class ViralService implements Runnable {
         try {
             rabbitMQManager.consumeBroadcastMessages(this::processBroadcastMessageJson);
             rabbitMQManager.consumeTopicMessages(this::processTopicMessageJson);
-
-            displayTrendingHashtags();
         } catch (IOException e) {
             logger.error("Error consuming messages in ViralService", e);
+        }
+
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                displayTrendingHashtags();
+                Thread.sleep(1000);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 

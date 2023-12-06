@@ -38,38 +38,59 @@ public class RabbitMQManager {
     private void setupRabbitMQ() {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");  // Replace with the actual host
-        // factory.setUsername("username");
-        // factory.setPassword("password");
+        factory.setUsername("guest");
+        factory.setPassword("guest");
 
         try {
+            logger.info("Attempting to establish RabbitMQ connection...");
             connection = factory.newConnection();
             channel = connection.createChannel();
 
-            // Declare the queues
+            logger.info("Declaring queues...");
             channel.queueDeclare(BROADCAST_QUEUE_NAME, false, false, false, null);
             channel.queueDeclare(TOPIC_QUEUE_NAME, false, false, false, null);
+            logger.info("Queues declared successfully.");
         } catch (IOException | TimeoutException e) {
+            logger.error("Failed to set up RabbitMQ: ", e);
             throw new RuntimeException(e);
         }
     }
 
     public void publishMessage(Message message) throws IOException {
-        String messageJson = MessageQueueDTO.fromMessage(message).toJson();
-        channel.basicPublish("", BROADCAST_QUEUE_NAME, null, messageJson.getBytes());
+        try {
+            String messageJson = MessageQueueDTO.fromMessage(message).toJson();
+            logger.debug("Publishing message to broadcast queue: {}", messageJson);
+            channel.basicPublish("", BROADCAST_QUEUE_NAME, null, messageJson.getBytes());
+        } catch (IOException e) {
+            logger.error("Failed to publish message: ", e);
+            throw e;
+        }
     }
 
     public void publishTopicMessage(TopicMessage message) throws IOException {
-        String messageJson = TopicMessageDTO.fromTopicMessage(message).toJson();
-        channel.basicPublish("", TOPIC_QUEUE_NAME, null, messageJson.getBytes());
+        try {
+            String messageJson = TopicMessageDTO.fromTopicMessage(message).toJson();
+            logger.debug("Publishing message to topic queue: {}", messageJson);
+            channel.basicPublish("", TOPIC_QUEUE_NAME, null, messageJson.getBytes());
+        } catch (IOException e) {
+            logger.error("Failed to publish topic message: ", e);
+            throw e;
+        }
     }
 
     private void consumeMessages(String queueName, Consumer<String> messageProcessor) throws IOException {
-        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-            messageProcessor.accept(message);
-        };
-        channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {
-        });
+        try {
+            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+                String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+                logger.debug("Message received from {}: {}", queueName, message);
+                messageProcessor.accept(message);
+            };
+            channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {
+            });
+        } catch (IOException e) {
+            logger.error("Failed to consume messages from {}: ", queueName, e);
+            throw e;
+        }
     }
 
     public void consumeBroadcastMessages(Consumer<String> messageProcessor) throws IOException {
@@ -81,7 +102,19 @@ public class RabbitMQManager {
     }
 
     public void close() throws IOException, TimeoutException {
-        if (channel != null) channel.close();
-        if (connection != null) connection.close();
+        try {
+            if (channel != null) {
+                logger.info("Closing RabbitMQ channel...");
+                channel.close();
+            }
+            if (connection != null) {
+                logger.info("Closing RabbitMQ connection...");
+                connection.close();
+            }
+            logger.info("RabbitMQ resources closed successfully.");
+        } catch (IOException | TimeoutException e) {
+            logger.error("Error closing RabbitMQ resources: ", e);
+            throw e;
+        }
     }
 }

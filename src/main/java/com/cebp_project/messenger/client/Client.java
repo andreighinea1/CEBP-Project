@@ -80,7 +80,7 @@ public class Client implements Runnable {
         Thread.sleep(5500 + ThreadLocalRandom.current().nextInt(0, 1000));  // The msg will expire
 
         // Publish a message to the topic
-        TopicOrchestrator.getInstance().publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name));
+        TopicOrchestrator.getInstance().publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name + " #topic"));
         // Simulate a random delay for listening to topic
         Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 1500));
 
