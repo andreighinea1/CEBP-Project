@@ -1,5 +1,5 @@
 package com.cebp_project.rabbitmq;
-
+/////
 import com.cebp_project.dto.MessageQueueDTO;
 import com.cebp_project.messenger.message.Message;
 import com.cebp_project.messenger.topic.TopicMessage;
