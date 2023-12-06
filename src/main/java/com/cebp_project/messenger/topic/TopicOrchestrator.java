@@ -55,11 +55,11 @@ public class TopicOrchestrator {
         new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    Thread.sleep(1000);
                     long currentTime = System.currentTimeMillis();
                     topicMessages.forEach((type, queue) -> {
                         queue.removeIf(message -> currentTime - message.getSentTime() > maxTimeout);
                     });
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
