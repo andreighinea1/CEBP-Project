@@ -5,14 +5,15 @@ import com.cebp_project.messenger.message.MessageQueue;
 import com.cebp_project.messenger.server.Server;
 import com.cebp_project.messenger.topic.TopicMessage;
 import com.cebp_project.messenger.topic.TopicOrchestrator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Client implements Runnable {
-    // TODO-all-last: You may all need to modify this class, leave it for the last,
-    //  and tell ChatGPT to modify the examples accordingly after your changes in other classes
+    private static final Logger logger = LoggerFactory.getLogger(Client.class);
     private final String name;
     private final MessageQueue messageQueue;
     private final Server server;
@@ -26,28 +27,29 @@ public class Client implements Runnable {
     }
 
     public void receiveMessage(Message message) {
-        System.out.println(name + " received: " + message);
+        logger.info("{} received: {}", name, message);
     }
 
     public void receiveTopicMessage(TopicMessage topicMessage) {
-        System.out.println(name + " received topic message: " + topicMessage);
+        logger.info("{} received topic message: {}", name, topicMessage);
     }
 
     @Override
     public void run() {
+        logger.info("Client [{}] started", name);
         server.registerClient(name, this); // Register client with the server
         try {
             sendMockMessages();
             receiveMessages();
             publishAndListenToTopicMessages();
         } catch (InterruptedException | IllegalStateException | IOException e) {
-            System.out.println("Error in Client [" + name + "]: " + e.getMessage());
+            logger.error("Error in Client [{}]: {}", name, e.getMessage());
             Thread.currentThread().interrupt();
         }
     }
 
     private void sendMockMessages() throws InterruptedException, IOException {
-        // Sending mock messages with hashtags to other clients
+        logger.debug("Client [{}] sending mock messages", name);
         String[] mockMessages = {
                 "Hello from " + name + " #welcome",
                 "Enjoying Java programming #java #coding"
@@ -65,27 +67,24 @@ public class Client implements Runnable {
     }
 
     private void receiveMessages() {
+        logger.debug("Client [{}] receiving messages", name);
         for (int i = 0; i < otherClients.size() - 1; i++) {
             Message receivedMessage = messageQueue.receiveMessage(name);
             if (receivedMessage != null) {
-                System.out.println(name + " received from " + receivedMessage.getSender() + ": " + receivedMessage.getContent());
+                logger.info("{} received from {}: {}", name, receivedMessage.getSender(), receivedMessage.getContent());
             }
         }
     }
 
     private void publishAndListenToTopicMessages() throws InterruptedException, IOException {
-        // Publish topic messages
+        logger.debug("Client [{}] publishing and listening to topic messages", name);
         TopicOrchestrator.getInstance().publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
-//        Thread.sleep(ThreadLocalRandom.current().nextInt(0, 3500));  // The msg won't expire
-        Thread.sleep(5500 + ThreadLocalRandom.current().nextInt(0, 1000));  // The msg will expire
+        Thread.sleep(4500 + ThreadLocalRandom.current().nextInt(0, 1000));
 
-        // Publish a message to the topic
-        TopicOrchestrator.getInstance().publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name + " #topic"));
-        // Simulate a random delay for listening to topic
+        TopicOrchestrator.getInstance().publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name));
         Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 1500));
 
-        // Listening to the topic
         List<TopicMessage> topicMessages = TopicOrchestrator.getInstance().readMessages("commonTopic");
-        System.out.println(name + " reads from topic: " + topicMessages);
+        logger.info("{} reads from topic: {}", name, topicMessages);
     }
 }
