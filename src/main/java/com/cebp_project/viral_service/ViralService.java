@@ -22,14 +22,25 @@ public class ViralService implements Runnable {
 
     private final static String BROADCAST_QUEUE_NAME = "broadcast_queue";
     private final static String TOPIC_QUEUE_NAME = "topic_queue";
-    private RabbitMQManager rabbitMQManager;
+    private final RabbitMQManager rabbitMQManager;
 
     // Singleton instance
     private static final ViralService instance = new ViralService();
 
     // Private constructor to prevent instantiation
-    private ViralService() {
+    //private ViralService() {
+    //}
+    public ViralService() {
+        try {
+            this.rabbitMQManager = RabbitMQManager.getInstance();
+        } catch (IOException | TimeoutException e) {
+            e.printStackTrace();  // Handle the exception as needed
+            throw new RuntimeException("Failed to create RabbitMQManager instance", e);
+        }
     }
+
+
+
 
     // Getter method for the singleton instance
     public static ViralService getInstance() {
@@ -53,13 +64,13 @@ public class ViralService implements Runnable {
     @Override
     public void run() {
         try {
-            rabbitMQManager = new RabbitMQManager(BROADCAST_QUEUE_NAME, TOPIC_QUEUE_NAME);
             rabbitMQManager.consumeMessages(BROADCAST_QUEUE_NAME, this::processBroadcastMessageJson);
             rabbitMQManager.consumeMessages(TOPIC_QUEUE_NAME, this::processTopicMessageJson);
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
+//////
 
     private void processBroadcastMessageJson(String messageJson) {
         Message message = convertJsonToMessage(messageJson);

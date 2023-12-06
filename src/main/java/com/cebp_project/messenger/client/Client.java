@@ -12,16 +12,18 @@ public class Client implements Runnable {
     private final String name;
     private final RabbitMQManager rabbitMQManager;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
+////
     public Client(String name) throws IOException, TimeoutException {
         this.name = name;
-        this.rabbitMQManager = new RabbitMQManager("client_to_server_queue", "server_to_client_queue");
+        this.rabbitMQManager = RabbitMQManager.getInstance();
     }
 
     public void sendMessage(String content) throws IOException {
         MessageQueueDTO message = new MessageQueueDTO(this.name, "server", content, System.currentTimeMillis());
-        rabbitMQManager.publishMessage(message);
+        String messageJson = rabbitMQManager.serializeObject(message);
+        rabbitMQManager.publishMessage("client_to_server_queue", messageJson);
     }
+////
 
     public void receiveTopicMessage(String topicMessage) {
         System.out.println(name + " received topic message: " + topicMessage);
