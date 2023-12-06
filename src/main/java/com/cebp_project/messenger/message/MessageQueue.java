@@ -1,28 +1,35 @@
 package com.cebp_project.messenger.message;
 
-import com.cebp_project.viral_service.ViralService;
+import com.cebp_project.rabbitmq.RabbitMQManager;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeoutException;
 
 public class MessageQueue {
-    private static final MessageQueue instance = new MessageQueue(100);
+    private static MessageQueue instance;
     private final BlockingQueue<Message> queue;
+    private final RabbitMQManager rabbitMQManager;
 
-    private MessageQueue(int maxSize) {
+    private MessageQueue(int maxSize) throws IOException, TimeoutException {
         this.queue = new LinkedBlockingQueue<>(maxSize);
+        this.rabbitMQManager = RabbitMQManager.getInstance();
     }
 
-    public static MessageQueue getInstance() {
+    public static synchronized MessageQueue getInstance() throws IOException, TimeoutException {
+        if (instance == null) {
+            instance = new MessageQueue(100); // Default size for the queue
+        }
         return instance;
     }
 
-    public void sendMessage(Message message) throws IllegalStateException {
+    public void sendMessage(Message message) throws IllegalStateException, IOException {
         queue.add(message);
-        ViralService.getInstance().notifyNewMessage(); // Notify the Viral service
+        rabbitMQManager.publishMessage(message); // Publish to ViralService's RabbitMQ
     }
 
     public Message receiveMessage(String recipient) {

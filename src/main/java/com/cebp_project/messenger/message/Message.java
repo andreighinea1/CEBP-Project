@@ -13,6 +13,7 @@ public class Message {
         this.timestamp = timestamp;
     }
 
+
     public String getSender() {
         return sender;
     }

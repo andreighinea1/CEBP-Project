@@ -6,6 +6,7 @@ import com.cebp_project.messenger.server.Server;
 import com.cebp_project.messenger.topic.TopicMessage;
 import com.cebp_project.messenger.topic.TopicOrchestrator;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -34,18 +35,19 @@ public class Client implements Runnable {
 
     @Override
     public void run() {
-        server.registerClient(name, this);
+        server.registerClient(name, this); // Register client with the server
         try {
             sendMockMessages();
             receiveMessages();
             publishAndListenToTopicMessages();
-        } catch (InterruptedException | IllegalStateException e) {
+        } catch (InterruptedException | IllegalStateException | IOException e) {
             System.out.println("Error in Client [" + name + "]: " + e.getMessage());
             Thread.currentThread().interrupt();
         }
     }
 
-    private void sendMockMessages() throws InterruptedException {
+    private void sendMockMessages() throws InterruptedException, IOException {
+        // Sending mock messages with hashtags to other clients
         String[] mockMessages = {
                 "Hello from " + name + " #welcome",
                 "Enjoying Java programming #java #coding"
@@ -57,6 +59,7 @@ public class Client implements Runnable {
                     messageQueue.sendMessage(new Message(this.name, clientName, messageContent, System.currentTimeMillis()));
                 }
             }
+            // Simulate a random delay for sending messages
             Thread.sleep(ThreadLocalRandom.current().nextInt(50, 250));
         }
     }
@@ -70,18 +73,19 @@ public class Client implements Runnable {
         }
     }
 
-    private void publishAndListenToTopicMessages() throws InterruptedException {
+    private void publishAndListenToTopicMessages() throws InterruptedException, IOException {
         // Publish topic messages
-        TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
-//            Thread.sleep(ThreadLocalRandom.current().nextInt(0, 3500));  // The msg won't expire
+        TopicOrchestrator.getInstance().publishMessage(new TopicMessage("commonTopic", "FAST Broadcast from " + name));
+//        Thread.sleep(ThreadLocalRandom.current().nextInt(0, 3500));  // The msg won't expire
         Thread.sleep(4500 + ThreadLocalRandom.current().nextInt(0, 1000));  // The msg will expire
 
         // Publish a message to the topic
-        TopicOrchestrator.publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name));
+        TopicOrchestrator.getInstance().publishMessage(new TopicMessage("commonTopic", "Broadcast from " + name));
         // Simulate a random delay for listening to topic
         Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 1500));
 
-        List<TopicMessage> topicMessages = TopicOrchestrator.readMessages("commonTopic");
+        // Listening to the topic
+        List<TopicMessage> topicMessages = TopicOrchestrator.getInstance().readMessages("commonTopic");
         System.out.println(name + " reads from topic: " + topicMessages);
     }
 }

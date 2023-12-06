@@ -1,75 +1,77 @@
 package com.cebp_project.viral_service;
 
-// TODO-ale-last?: After the RabbitMQ is implemented, all these imports should be removed, and the DTO should be used
+import com.cebp_project.dto.MessageQueueDTO;
 import com.cebp_project.messenger.message.Message;
-import com.cebp_project.messenger.message.MessageQueue;
 import com.cebp_project.messenger.topic.TopicMessage;
-import com.cebp_project.messenger.topic.TopicOrchestrator;
+import com.cebp_project.rabbitmq.RabbitMQManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ViralService implements Runnable {
-    // TODO-bia-1: Don't use semaphores anymore, just duplicate the msg and send it to RabbitMQ
-    //  NOTE: Only use RabbitMQ for the connection between the Server and ViralService
+    private static final Logger logger = LoggerFactory.getLogger(ViralService.class);
+    private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts;
+    private final ConcurrentHashMap<String, Integer> topicHashtagCounts;
+    private final RabbitMQManager rabbitMQManager;
 
-    // TODO-ale-1: Make a DTO for transferring messages in the MessageQueue,
-    //  and another one for the ones in TopicOrchestrator (this will be used to communicate with RabbitMQ)
-
-    // TODO-deea-1: Make a main method to start this in a separate "admin" process
-
-    private static final ViralService instance = new ViralService();
-    private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Integer> topicHashtagCounts = new ConcurrentHashMap<>();
-    private final Set<Message> processedMessages = ConcurrentHashMap.newKeySet();
-    private final Set<TopicMessage> processedTopicMessages = ConcurrentHashMap.newKeySet();
-    private final Semaphore newMessageSemaphore = new Semaphore(0);  // Used to indicate new messages
-
-    public static ViralService getInstance() {
-        return instance;
-    }
-
-    public void notifyNewMessage() {
-        newMessageSemaphore.release();
+    public ViralService() {
+        this.broadcastHashtagCounts = new ConcurrentHashMap<>();
+        this.topicHashtagCounts = new ConcurrentHashMap<>();
+        this.rabbitMQManager = RabbitMQManager.getInstance();
     }
 
     @Override
     public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
-                newMessageSemaphore.acquire();
-                processBroadcastMessages();  // TODO-bia-2: These 2 channels would be RabbitMQ channels
-                processTopicMessages();
-                displayTrendingHashtags();
-                newMessageSemaphore.drainPermits();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+        try {
+            rabbitMQManager.consumeBroadcastMessages(this::processBroadcastMessageJson);
+            rabbitMQManager.consumeTopicMessages(this::processTopicMessageJson);
+        } catch (IOException e) {
+            logger.error("Error consuming messages in ViralService", e);
         }
     }
 
-    private void processBroadcastMessages() {
-        for (Message message : MessageQueue.getInstance().getAllMessages()) {
-            if (!processedMessages.contains(message)) {
-                extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
-                processedMessages.add(message);
-            }
+    private void processBroadcastMessageJson(String messageJson) {
+        Message message = convertJsonToMessage(messageJson);
+        if (message != null) {
+            processBroadcastMessage(message);
         }
     }
 
-    private void processTopicMessages() {
-        List<TopicMessage> topicMessages = TopicOrchestrator.getAllMessages();
-        for (TopicMessage message : topicMessages) {
-            if (!processedTopicMessages.contains(message)) {
-                extractAndCountHashtags(message.getContent(), topicHashtagCounts);
-                processedTopicMessages.add(message);
-            }
+    private void processTopicMessageJson(String messageJson) {
+        TopicMessage message = convertJsonToTopicMessage(messageJson);
+        if (message != null) {
+            processTopicMessage(message);
         }
+    }
+
+    private Message convertJsonToMessage(String json) {
+        MessageQueueDTO dto = MessageQueueDTO.fromJson(json);
+        if (dto == null) {
+            logger.error("Failed to deserialize message from JSON");
+            return null;
+        }
+        return new Message(dto.getSender(), dto.getRecipient(), dto.getContent(), dto.getTimestamp());
+    }
+
+    private TopicMessage convertJsonToTopicMessage(String json) {
+        // Implement deserialization logic for TopicMessage
+        // Placeholder - replace with actual implementation
+        return new TopicMessage("someTopicType", "This is the content of the topic message.");
+    }
+
+    private void processBroadcastMessage(Message message) {
+        extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
+        // Additional processing...
+    }
+
+    private void processTopicMessage(TopicMessage message) {
+        extractAndCountHashtags(message.getContent(), topicHashtagCounts);
+        // Additional processing...
     }
 
     private void extractAndCountHashtags(String content, ConcurrentHashMap<String, Integer> hashtagMap) {
@@ -90,10 +92,20 @@ public class ViralService implements Runnable {
     }
 
     private void displayHashtagCounts(String messageType, ConcurrentHashMap<String, Integer> hashtagCounts) {
-        System.out.println("Trending Hashtags in " + messageType + " Messages:");
+        logger.info("Trending Hashtags in {} Messages:", messageType);
         hashtagCounts.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(10) // Display top 10 hashtags
-                .forEach(entry -> System.out.println(entry.getKey() + ": " + entry.getValue()));
+                .sorted((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()))
+                .limit(10)
+                .forEach(entry -> logger.info("{}: {}", entry.getKey(), entry.getValue()));
+    }
+
+    public void stopService() {
+        try {
+            if (rabbitMQManager != null) {
+                rabbitMQManager.close();
+            }
+        } catch (IOException | TimeoutException e) {
+            logger.error("Error closing RabbitMQManager", e);
+        }
     }
 }
