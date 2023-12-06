@@ -5,6 +5,8 @@ import com.cebp_project.messenger.message.Message;
 import com.cebp_project.messenger.message.MessageQueue;
 import com.cebp_project.messenger.topic.TopicMessage;
 import com.cebp_project.messenger.topic.TopicOrchestrator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,8 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
 public class Server implements Runnable {
+    private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private final Map<String, Client> clients;
-    private final Map<String, List<Client>> topicSubscribers; // Keep track of topic subscribers
+    private final Map<String, List<Client>> topicSubscribers;
 
     public Server() {
         this.clients = new ConcurrentHashMap<>();
@@ -24,29 +27,31 @@ public class Server implements Runnable {
 
     public void registerClient(String name, Client client) {
         clients.put(name, client);
+        logger.info("Client registered: {}", name);
     }
 
     public void subscribeClientToTopic(String topic, Client client) {
         topicSubscribers.computeIfAbsent(topic, k -> new ArrayList<>()).add(client);
+        logger.info("Client subscribed to topic: {}", topic);
     }
 
     @Override
     public void run() {
+        logger.info("Server started");
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 processDirectMessages();
-            } catch (IOException | TimeoutException e) {
-                throw new RuntimeException(e);
+                processTopicMessages();
+            } catch (Exception e) {
+                logger.error("Error in Server run loop", e);
             }
-            processTopicMessages();
         }
     }
 
     private void processDirectMessages() throws IOException, TimeoutException {
-        Message message = MessageQueue.getInstance().poll(); // Use poll instead of take to avoid blocking
+        Message message = MessageQueue.getInstance().poll();
         if (message != null) {
-            String recipient = message.getRecipient();
-            Client recipientClient = clients.get(recipient);
+            Client recipientClient = clients.get(message.getRecipient());
             if (recipientClient != null) {
                 recipientClient.receiveMessage(message);
             }
@@ -54,7 +59,6 @@ public class Server implements Runnable {
     }
 
     private void processTopicMessages() {
-        // Handle topic messages from TopicOrchestrator
         List<TopicMessage> allTopicMessages = TopicOrchestrator.getInstance().getAllMessages();
         for (TopicMessage topicMessage : allTopicMessages) {
             List<Client> subscribers = topicSubscribers.get(topicMessage.getType());
