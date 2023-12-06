@@ -68,5 +68,6 @@ public class Server implements Runnable {
                 }
             }
         }
+        TopicOrchestrator.getInstance().clearMessages();
     }
 }

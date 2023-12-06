@@ -46,6 +46,10 @@ public class TopicOrchestrator {
         return allMessages;
     }
 
+    public void clearMessages() {
+        topicMessages.clear();
+    }
+
     public int size(String type) {
         ConcurrentLinkedQueue<TopicMessage> queue = topicMessages.get(type);
         return (queue != null) ? queue.size() : 0;

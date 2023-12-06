@@ -18,7 +18,7 @@ public class MessageQueue {
     private final BlockingQueue<Message> queue;
     private final RabbitMQManager rabbitMQManager;
 
-    private MessageQueue(int maxSize) throws IOException, TimeoutException {
+    private MessageQueue(int maxSize) {
         this.queue = new LinkedBlockingQueue<>(maxSize);
         this.rabbitMQManager = RabbitMQManager.getInstance();
     }
@@ -30,11 +30,11 @@ public class MessageQueue {
         return instance;
     }
 
-    public void sendMessage(Message message) throws IllegalStateException, IOException {
+    public void sendMessage(Message message) throws IllegalStateException {
         logger.info("Sending message from {} to {}", message.getSender(), message.getRecipient());
         queue.add(message);
         try {
-            rabbitMQManager.publishMessage(message);
+            rabbitMQManager.publishMessage(message);  // Publish to ViralService's RabbitMQ
         } catch (IOException e) {
             logger.error("Failed to publish message to RabbitMQ", e);
             throw new RuntimeException("Failed to publish message", e);
