@@ -19,7 +19,6 @@ public class TopicMessageDTO implements Serializable {
     @JsonProperty("sentTime")
     private long sentTime;
 
-    // Constructor
     private TopicMessageDTO(@JsonProperty("type") String type,
                             @JsonProperty("content") String content,
                             @JsonProperty("sentTime") long sentTime) {
@@ -27,6 +26,7 @@ public class TopicMessageDTO implements Serializable {
         this.content = content;
         this.sentTime = sentTime;
     }
+
 
     public static TopicMessageDTO fromTopicMessage(TopicMessage message) {
         return new TopicMessageDTO(message.getType(), message.getContent(), message.getSentTime());
@@ -43,32 +43,6 @@ public class TopicMessageDTO implements Serializable {
         }
     }
 
-    // Getters
-    public String getType() {
-        return type;
-    }
-
-    // Setters
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public long getSentTime() {
-        return sentTime;
-    }
-
-    public void setSentTime(long sentTime) {
-        this.sentTime = sentTime;
-    }
-
     // Method to serialize TopicMessageDTO to JSON
     public String toJson() {
         try {
@@ -78,6 +52,19 @@ public class TopicMessageDTO implements Serializable {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // Getters
+    public String getType() {
+        return type;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public long getSentTime() {
+        return sentTime;
     }
 
     @Override

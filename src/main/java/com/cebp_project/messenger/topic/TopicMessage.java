@@ -17,6 +17,7 @@ public class TopicMessage {
         this.sentTime = sentTime;
     }
 
+
     public String getType() {
         return type;
     }

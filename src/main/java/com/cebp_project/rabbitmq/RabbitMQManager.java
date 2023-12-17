@@ -16,28 +16,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import static com.cebp_project.messenger.constants.Constants.RABBITMQ_BROADCAST_QUEUE_NAME;
+import static com.cebp_project.messenger.constants.Constants.RABBITMQ_TOPIC_QUEUE_NAME;
+
 public class RabbitMQManager {
     private static final Logger logger = LoggerFactory.getLogger(RabbitMQManager.class);
-    private static final String BROADCAST_QUEUE_NAME = "broadcast_queue";
-    private static final String TOPIC_QUEUE_NAME = "topic_queue";
-    private static RabbitMQManager instance;
     private Channel channel;
     private Connection connection;
 
-    private RabbitMQManager() {
+    public RabbitMQManager() {
         setupRabbitMQ();
     }
 
-    public static synchronized RabbitMQManager getInstance() {
-        if (instance == null) {
-            instance = new RabbitMQManager();
-        }
-        return instance;
-    }
 
     private void setupRabbitMQ() {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("localhost");  // Replace with the actual host
+        factory.setHost("localhost");
         factory.setUsername("guest");
         factory.setPassword("guest");
 
@@ -47,8 +41,8 @@ public class RabbitMQManager {
             channel = connection.createChannel();
 
             logger.info("Declaring queues...");
-            channel.queueDeclare(BROADCAST_QUEUE_NAME, false, false, false, null);
-            channel.queueDeclare(TOPIC_QUEUE_NAME, false, false, false, null);
+            channel.queueDeclare(RABBITMQ_BROADCAST_QUEUE_NAME, false, false, false, null);
+            channel.queueDeclare(RABBITMQ_TOPIC_QUEUE_NAME, false, false, false, null);
             logger.info("Queues declared successfully.");
         } catch (IOException | TimeoutException e) {
             logger.error("Failed to set up RabbitMQ: ", e);
@@ -56,25 +50,25 @@ public class RabbitMQManager {
         }
     }
 
-    public void publishMessage(Message message) throws IOException {
+    public void publishMessage(Message message) {
         try {
             String messageJson = MessageQueueDTO.fromMessage(message).toJson();
             logger.debug("Publishing message to broadcast queue: {}", messageJson);
-            channel.basicPublish("", BROADCAST_QUEUE_NAME, null, messageJson.getBytes());
+            channel.basicPublish("", RABBITMQ_BROADCAST_QUEUE_NAME, null, messageJson.getBytes());
         } catch (IOException e) {
-            logger.error("Failed to publish message: ", e);
-            throw e;
+            logger.error("Failed to publish message to RabbitMQ", e);
+            throw new RuntimeException("Failed to publish message to RabbitMQ " + message, e);
         }
     }
 
-    public void publishTopicMessage(TopicMessage message) throws IOException {
+    public void publishTopicMessage(TopicMessage message) {
         try {
             String messageJson = TopicMessageDTO.fromTopicMessage(message).toJson();
             logger.debug("Publishing message to topic queue: {}", messageJson);
-            channel.basicPublish("", TOPIC_QUEUE_NAME, null, messageJson.getBytes());
+            channel.basicPublish("", RABBITMQ_TOPIC_QUEUE_NAME, null, messageJson.getBytes());
         } catch (IOException e) {
-            logger.error("Failed to publish topic message: ", e);
-            throw e;
+            logger.error("Failed to publish topic message to RabbitMQ", e);
+            throw new RuntimeException("Failed to publish topic message to RabbitMQ " + message, e);
         }
     }
 
@@ -95,11 +89,11 @@ public class RabbitMQManager {
     }
 
     public void consumeBroadcastMessages(Consumer<String> messageProcessor) throws IOException {
-        consumeMessages(BROADCAST_QUEUE_NAME, messageProcessor);
+        consumeMessages(RABBITMQ_BROADCAST_QUEUE_NAME, messageProcessor);
     }
 
     public void consumeTopicMessages(Consumer<String> messageProcessor) throws IOException {
-        consumeMessages(TOPIC_QUEUE_NAME, messageProcessor);
+        consumeMessages(RABBITMQ_TOPIC_QUEUE_NAME, messageProcessor);
     }
 
     public void close() throws IOException, TimeoutException {

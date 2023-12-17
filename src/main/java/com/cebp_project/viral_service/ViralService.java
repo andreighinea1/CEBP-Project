@@ -23,9 +23,10 @@ public class ViralService implements Runnable {
     public ViralService() {
         this.broadcastHashtagCounts = new ConcurrentHashMap<>();
         this.topicHashtagCounts = new ConcurrentHashMap<>();
-        this.rabbitMQManager = RabbitMQManager.getInstance();
+        this.rabbitMQManager = new RabbitMQManager();
         logger.info("ViralService properly started.");
     }
+
 
     public static void main(String[] args) {
         ViralService viralService = new ViralService();
@@ -39,6 +40,7 @@ public class ViralService implements Runnable {
             logger.error("Main thread interrupted", e);
         }
     }
+
 
     @Override
     public void run() {
@@ -94,12 +96,10 @@ public class ViralService implements Runnable {
 
     private void processBroadcastMessage(Message message) {
         extractAndCountHashtags(message.getContent(), broadcastHashtagCounts);
-        // Additional processing...
     }
 
     private void processTopicMessage(TopicMessage message) {
         extractAndCountHashtags(message.getContent(), topicHashtagCounts);
-        // Additional processing...
     }
 
     private void extractAndCountHashtags(String content, ConcurrentHashMap<String, Integer> hashtagMap) {

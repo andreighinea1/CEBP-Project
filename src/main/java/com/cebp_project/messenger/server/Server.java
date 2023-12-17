@@ -5,25 +5,34 @@ import com.cebp_project.messenger.message.Message;
 import com.cebp_project.messenger.message.MessageQueue;
 import com.cebp_project.messenger.topic.TopicMessage;
 import com.cebp_project.messenger.topic.TopicOrchestrator;
+import com.cebp_project.rabbitmq.RabbitMQManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeoutException;
+
+import static com.cebp_project.messenger.constants.Constants.MessageQueueMaxSize;
+import static com.cebp_project.messenger.constants.Constants.TopicOrchestratorMaxTimeout;
 
 public class Server implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private final Map<String, Client> clients;
     private final Map<String, List<Client>> topicSubscribers;
+    private final TopicOrchestrator topicOrchestrator;
+    private final MessageQueue messageQueue;
+    private final RabbitMQManager serverRabbitMQManager;
 
     public Server() {
         this.clients = new ConcurrentHashMap<>();
         this.topicSubscribers = new ConcurrentHashMap<>();
+        this.serverRabbitMQManager = new RabbitMQManager();
+        this.topicOrchestrator = new TopicOrchestrator(TopicOrchestratorMaxTimeout, serverRabbitMQManager);
+        this.messageQueue = new MessageQueue(MessageQueueMaxSize, serverRabbitMQManager);
     }
+
 
     public void registerClient(String name, Client client) {
         clients.put(name, client);
@@ -48,8 +57,8 @@ public class Server implements Runnable {
         }
     }
 
-    private void processDirectMessages() throws IOException, TimeoutException {
-        Message message = MessageQueue.getInstance().poll();
+    private void processDirectMessages() {
+        Message message = messageQueue.poll();
         if (message != null) {
             Client recipientClient = clients.get(message.getRecipient());
             if (recipientClient != null) {
@@ -59,15 +68,32 @@ public class Server implements Runnable {
     }
 
     private void processTopicMessages() {
-        List<TopicMessage> allTopicMessages = TopicOrchestrator.getInstance().getAllMessages();
-        for (TopicMessage topicMessage : allTopicMessages) {
-            List<Client> subscribers = topicSubscribers.get(topicMessage.getType());
-            if (subscribers != null) {
+        for (String topic : topicSubscribers.keySet()) {
+            List<TopicMessage> messagesForTopic = topicOrchestrator.readMessages(topic);
+            if (messagesForTopic != null) {
+                processMessagesForTopic(topic, messagesForTopic);
+            }
+            topicOrchestrator.clearMessagesForTopic(topic);
+        }
+    }
+
+    private void processMessagesForTopic(String topic, List<TopicMessage> messages) {
+        List<Client> subscribers = topicSubscribers.get(topic);
+        if (subscribers != null) {
+            for (TopicMessage message : messages) {
                 for (Client subscriber : subscribers) {
-                    subscriber.receiveTopicMessage(topicMessage);
+                    subscriber.receiveTopicMessage(message);
                 }
             }
         }
-        TopicOrchestrator.getInstance().clearMessages();
+    }
+
+    // Getters
+    public TopicOrchestrator getTopicOrchestrator() {
+        return topicOrchestrator;
+    }
+
+    public MessageQueue getMessageQueue() {
+        return messageQueue;
     }
 }

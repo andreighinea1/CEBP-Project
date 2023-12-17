@@ -2,35 +2,29 @@ package com.cebp_project.messenger.topic;
 
 import com.cebp_project.rabbitmq.RabbitMQManager;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class TopicOrchestrator {
-    private static TopicOrchestrator instance;
     private final ConcurrentHashMap<String, ConcurrentLinkedQueue<TopicMessage>> topicMessages;
     private final long maxTimeout;
-    private final RabbitMQManager rabbitMQManager;
+    private final RabbitMQManager serverRabbitMQManager;
+    private Thread garbageCollectorThread;
 
-    private TopicOrchestrator(long maxTimeout) {
+
+    public TopicOrchestrator(long maxTimeout, RabbitMQManager serverRabbitMQManager) {
         this.maxTimeout = maxTimeout;
         this.topicMessages = new ConcurrentHashMap<>();
-        this.rabbitMQManager = RabbitMQManager.getInstance();
+        this.serverRabbitMQManager = serverRabbitMQManager;
         startGarbageCollector();
     }
 
-    public static synchronized TopicOrchestrator getInstance() {
-        if (instance == null) {
-            instance = new TopicOrchestrator(5000);
-        }
-        return instance;
-    }
-
-    public void publishMessage(TopicMessage message) throws IOException {
+    public void publishMessage(TopicMessage message) {
         topicMessages.computeIfAbsent(message.getType(), k -> new ConcurrentLinkedQueue<>()).add(message);
-        rabbitMQManager.publishTopicMessage(message); // Publish to RabbitMQ
+        // Try to publish to the Server's RabbitMQ (which will be read by the ViralService)
+        serverRabbitMQManager.publishTopicMessage(message);
     }
 
     public List<TopicMessage> readMessages(String type) {
@@ -38,16 +32,8 @@ public class TopicOrchestrator {
         return new ArrayList<>(messages);
     }
 
-    public List<TopicMessage> getAllMessages() {
-        List<TopicMessage> allMessages = new ArrayList<>();
-        for (ConcurrentLinkedQueue<TopicMessage> queue : topicMessages.values()) {
-            allMessages.addAll(queue);
-        }
-        return allMessages;
-    }
-
-    public void clearMessages() {
-        topicMessages.clear();
+    public void clearMessagesForTopic(String topic) {
+        topicMessages.remove(topic);
     }
 
     public int size(String type) {
@@ -56,7 +42,7 @@ public class TopicOrchestrator {
     }
 
     private void startGarbageCollector() {
-        new Thread(() -> {
+        garbageCollectorThread = new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     long currentTime = System.currentTimeMillis();
@@ -66,8 +52,19 @@ public class TopicOrchestrator {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    break;
                 }
             }
-        }).start();
+        });
+
+        garbageCollectorThread.setName("TopicOrchestrator-GarbageCollector");
+        garbageCollectorThread.setDaemon(true);
+        garbageCollectorThread.start();
+    }
+
+    public void stopGarbageCollector() {
+        if (garbageCollectorThread != null) {
+            garbageCollectorThread.interrupt();
+        }
     }
 }

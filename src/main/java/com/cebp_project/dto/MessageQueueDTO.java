@@ -22,7 +22,6 @@ public class MessageQueueDTO implements Serializable {
     @JsonProperty("timestamp")
     private long timestamp;
 
-    // Constructor
     private MessageQueueDTO(@JsonProperty("sender") String sender,
                             @JsonProperty("recipient") String recipient,
                             @JsonProperty("content") String content,
@@ -32,6 +31,7 @@ public class MessageQueueDTO implements Serializable {
         this.content = content;
         this.timestamp = timestamp;
     }
+
 
     public static MessageQueueDTO fromMessage(Message message) {
         return new MessageQueueDTO(message.getSender(), message.getRecipient(), message.getContent(), message.getTimestamp());
@@ -48,40 +48,6 @@ public class MessageQueueDTO implements Serializable {
         }
     }
 
-    // Getters
-    public String getSender() {
-        return sender;
-    }
-
-    // Setters
-    public void setSender(String sender) {
-        this.sender = sender;
-    }
-
-    public String getRecipient() {
-        return recipient;
-    }
-
-    public void setRecipient(String recipient) {
-        this.recipient = recipient;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
     // Method to serialize MessageQueueDTO to JSON
     public String toJson() {
         try {
@@ -91,6 +57,23 @@ public class MessageQueueDTO implements Serializable {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // Getters
+    public String getSender() {
+        return sender;
+    }
+
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
     }
 
     @Override

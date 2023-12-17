@@ -4,60 +4,25 @@ import com.cebp_project.rabbitmq.RabbitMQManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeoutException;
 
 public class MessageQueue {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueue.class);
-    private static MessageQueue instance;
     private final BlockingQueue<Message> queue;
-    private final RabbitMQManager rabbitMQManager;
+    private final RabbitMQManager serverRabbitMQManager;
 
-    private MessageQueue(int maxSize) {
+    public MessageQueue(int maxSize, RabbitMQManager serverRabbitMQManager) {
         this.queue = new LinkedBlockingQueue<>(maxSize);
-        this.rabbitMQManager = RabbitMQManager.getInstance();
+        this.serverRabbitMQManager = serverRabbitMQManager;
     }
 
-    public static synchronized MessageQueue getInstance() throws IOException, TimeoutException {
-        if (instance == null) {
-            instance = new MessageQueue(100); // Default size for the queue
-        }
-        return instance;
-    }
 
     public void sendMessage(Message message) throws IllegalStateException {
         logger.info("Sending message from {} to {}", message.getSender(), message.getRecipient());
         queue.add(message);
-        try {
-            rabbitMQManager.publishMessage(message);  // Publish to ViralService's RabbitMQ
-        } catch (IOException e) {
-            logger.error("Failed to publish message to RabbitMQ", e);
-            throw new RuntimeException("Failed to publish message", e);
-        }
-    }
-
-    public Message receiveMessage(String recipient) {
-        logger.debug("Receiving message for {}", recipient);
-        Iterator<Message> iterator = queue.iterator();
-        while (iterator.hasNext()) {
-            Message message = iterator.next();
-            if (recipient.equals(message.getRecipient())) {
-                iterator.remove();
-                logger.info("Message received for {}: {}", recipient, message);
-                return message;
-            }
-        }
-        return null;
-    }
-
-    public List<Message> getAllMessages() {
-        logger.debug("Getting all messages");
-        return new ArrayList<>(queue);
+        // Try to publish to the Server's RabbitMQ (which will be read by the ViralService)
+        serverRabbitMQManager.publishMessage(message);
     }
 
     public Message poll() {

@@ -8,7 +8,6 @@ import com.cebp_project.messenger.topic.TopicOrchestrator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -18,15 +17,18 @@ public class Client implements Runnable {
     private final MessageQueue messageQueue;
     private final Server server;
     private final List<String> otherClients;
+    private final TopicOrchestrator topicOrchestrator;
 
     private final String topicToUse = "commonTopic";
 
-    public Client(String name, MessageQueue messageQueue, List<String> otherClients, Server server) {
+    public Client(String name, List<String> otherClients, Server server) {
         this.name = name;
-        this.messageQueue = messageQueue;
         this.otherClients = otherClients;
         this.server = server;
+        this.messageQueue = server.getMessageQueue();
+        this.topicOrchestrator = server.getTopicOrchestrator();
     }
+
 
     public void receiveMessage(Message message) {
         logger.info("{} received: {}", name, message);
@@ -44,13 +46,13 @@ public class Client implements Runnable {
         try {
             sendMockMessages();
             publishTopicMessages();
-        } catch (InterruptedException | IllegalStateException | IOException e) {
+        } catch (InterruptedException | IllegalStateException e) {
             logger.error("Error in Client [{}]: {}", name, e.getMessage());
             Thread.currentThread().interrupt();
         }
     }
 
-    private void sendMockMessages() throws InterruptedException, IOException {
+    private void sendMockMessages() throws InterruptedException {
         logger.debug("Client [{}] sending mock messages", name);
         String[] mockMessages = {
                 "Hello from " + name + " #welcome",
@@ -60,7 +62,11 @@ public class Client implements Runnable {
         for (String messageContent : mockMessages) {
             for (String clientName : otherClients) {
                 if (!clientName.equals(this.name)) {
-                    messageQueue.sendMessage(new Message(this.name, clientName, messageContent, System.currentTimeMillis()));
+                    try {
+                        messageQueue.sendMessage(new Message(this.name, clientName, messageContent, System.currentTimeMillis()));
+                    } catch (IllegalStateException e) {
+                        logger.error("Queue full, couldn't send broadcast msg");
+                    }
                 }
             }
             // Simulate a random delay for sending messages
@@ -68,15 +74,15 @@ public class Client implements Runnable {
         }
     }
 
-    private void publishTopicMessages() throws InterruptedException, IOException {
+    private void publishTopicMessages() throws InterruptedException {
         // Publish topic messages
-        logger.debug("Client [{}] publishing and listening to topic messages", name);
-        TopicOrchestrator.getInstance().publishMessage(new TopicMessage(topicToUse, "FAST Broadcast from " + name));
+        logger.debug("Client [{}] publishing topic messages", name);
+        topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "EXPIRED Broadcast from " + name));
 //        Thread.sleep(ThreadLocalRandom.current().nextInt(0, 3500));  // The msg won't expire
         Thread.sleep(5500 + ThreadLocalRandom.current().nextInt(0, 1000));  // The msg will expire
 
         // Publish a message to the topic
-        TopicOrchestrator.getInstance().publishMessage(new TopicMessage(topicToUse, "Broadcast from " + name + " #topic"));
+        topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "Broadcast from " + name + " #topic"));
         // Simulate a random delay for listening to topic
         Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 1500));
     }
