@@ -54,20 +54,29 @@ public class TopicOrchestrator {
         deliveredMessages.computeIfAbsent(clientName, k -> ConcurrentHashMap.newKeySet()).add(message);
     }
 
+    private void cleanDeliveredMessagesForMessage(TopicMessage message) {
+        deliveredMessages.forEach((clientName, messages) -> messages.remove(message));
+    }
+
     private void startGarbageCollector() {
         garbageCollectorThread = new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     long currentTime = System.currentTimeMillis();
+
+                    // Remove expired messages from topicMessages and clean deliveredMessages
                     topicMessages.forEach((type, queue) -> {
                         queue.removeIf(message -> {
                             boolean shouldRemove = currentTime - message.getSentTime() > maxTimeout;
                             if (shouldRemove) {
                                 logger.info("Removing expired message from topic [{}]: {}", type, message.getContent());
+                                // Clean corresponding entries in deliveredMessages
+                                cleanDeliveredMessagesForMessage(message);
                             }
                             return shouldRemove;
                         });
                     });
+
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
                     logger.info("Garbage collector thread interrupted");
