@@ -4,6 +4,7 @@ import com.cebp_project.rabbitmq.RabbitMQManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -18,7 +19,7 @@ public class MessageQueue {
     }
 
 
-    public void sendMessage(Message message) throws IllegalStateException {
+    public void sendMessage(Message message) throws IllegalStateException, IOException {
         logger.info("Sending message from {} to {}", message.getSender(), message.getRecipient());
         queue.add(message);
         // Try to publish to the Server's RabbitMQ (which will be read by the ViralService)

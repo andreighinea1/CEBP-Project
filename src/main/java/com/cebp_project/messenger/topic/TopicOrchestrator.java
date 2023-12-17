@@ -2,6 +2,7 @@ package com.cebp_project.messenger.topic;
 
 import com.cebp_project.rabbitmq.RabbitMQManager;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +22,7 @@ public class TopicOrchestrator {
         startGarbageCollector();
     }
 
-    public void publishMessage(TopicMessage message) {
+    public void publishMessage(TopicMessage message) throws IOException {
         topicMessages.computeIfAbsent(message.getType(), k -> new ConcurrentLinkedQueue<>()).add(message);
         // Try to publish to the Server's RabbitMQ (which will be read by the ViralService)
         serverRabbitMQManager.publishTopicMessage(message);

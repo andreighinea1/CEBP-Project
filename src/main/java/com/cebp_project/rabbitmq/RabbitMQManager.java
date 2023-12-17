@@ -50,25 +50,25 @@ public class RabbitMQManager {
         }
     }
 
-    public void publishMessage(Message message) {
+    public void publishMessage(Message message) throws IOException {
         try {
             String messageJson = MessageQueueDTO.fromMessage(message).toJson();
             logger.debug("Publishing message to broadcast queue: {}", messageJson);
             channel.basicPublish("", RABBITMQ_BROADCAST_QUEUE_NAME, null, messageJson.getBytes());
         } catch (IOException e) {
-            logger.error("Failed to publish message to RabbitMQ", e);
-            throw new RuntimeException("Failed to publish message to RabbitMQ " + message, e);
+            logger.error("Failed to publish broadcast message {} to RabbitMQ", message, e);
+            throw e;
         }
     }
 
-    public void publishTopicMessage(TopicMessage message) {
+    public void publishTopicMessage(TopicMessage message) throws IOException {
         try {
             String messageJson = TopicMessageDTO.fromTopicMessage(message).toJson();
             logger.debug("Publishing message to topic queue: {}", messageJson);
             channel.basicPublish("", RABBITMQ_TOPIC_QUEUE_NAME, null, messageJson.getBytes());
         } catch (IOException e) {
-            logger.error("Failed to publish topic message to RabbitMQ", e);
-            throw new RuntimeException("Failed to publish topic message to RabbitMQ " + message, e);
+            logger.error("Failed to publish topic message {} to RabbitMQ", message, e);
+            throw e;
         }
     }
 

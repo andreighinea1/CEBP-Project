@@ -8,6 +8,7 @@ import com.cebp_project.messenger.topic.TopicOrchestrator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -66,6 +67,9 @@ public class Client implements Runnable {
                         messageQueue.sendMessage(new Message(this.name, clientName, messageContent, System.currentTimeMillis()));
                     } catch (IllegalStateException e) {
                         logger.error("Queue full, couldn't send broadcast msg");
+                    } catch (IOException e) {
+                        logger.error("Error from RabbitMQ");
+                        throw new RuntimeException(e);
                     }
                 }
             }
@@ -77,13 +81,23 @@ public class Client implements Runnable {
     private void publishTopicMessages() throws InterruptedException {
         // Publish topic messages
         logger.debug("Client [{}] publishing topic messages", name);
-        topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "EXPIRED Broadcast from " + name));
-//        Thread.sleep(ThreadLocalRandom.current().nextInt(0, 3500));  // The msg won't expire
-        Thread.sleep(5500 + ThreadLocalRandom.current().nextInt(0, 1000));  // The msg will expire
 
-        // Publish a message to the topic
-        topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "Broadcast from " + name + " #topic"));
-        // Simulate a random delay for listening to topic
-        Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 1500));
+        try {
+            topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "EXPIRED Broadcast from " + name));
+//            Thread.sleep(ThreadLocalRandom.current().nextInt(0, 3500));  // The msg won't expire
+            Thread.sleep(5500 + ThreadLocalRandom.current().nextInt(0, 1000));  // The msg will expire
+        } catch (IOException e) {
+            logger.error("Error from RabbitMQ");
+            throw new RuntimeException(e);
+        }
+
+        try {
+            topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "Broadcast from " + name + " #topic"));
+            // Simulate a random delay for listening to topic
+            Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 1500));
+        } catch (IOException e) {
+            logger.error("Error from RabbitMQ");
+            throw new RuntimeException(e);
+        }
     }
 }
