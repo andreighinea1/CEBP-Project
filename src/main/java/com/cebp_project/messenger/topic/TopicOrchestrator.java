@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -15,15 +17,17 @@ public class TopicOrchestrator {
     private final ConcurrentHashMap<String, ConcurrentLinkedQueue<TopicMessage>> topicMessages;
     private final long maxTimeout;
     private final RabbitMQManager serverRabbitMQManager;
+    private final ConcurrentHashMap<String, Set<TopicMessage>> deliveredMessages;
     private Thread garbageCollectorThread;
-
 
     public TopicOrchestrator(long maxTimeout, RabbitMQManager serverRabbitMQManager) {
         this.maxTimeout = maxTimeout;
         this.topicMessages = new ConcurrentHashMap<>();
         this.serverRabbitMQManager = serverRabbitMQManager;
+        this.deliveredMessages = new ConcurrentHashMap<>();
         startGarbageCollector();
     }
+
 
     public void publishMessage(TopicMessage message) throws IOException {
         logger.info("Publishing message to topic [{}]: {}", message.getType(), message.getContent());
@@ -37,13 +41,17 @@ public class TopicOrchestrator {
         return new ArrayList<>(messages);
     }
 
-    public void clearMessagesForTopic(String topic) {
-        topicMessages.remove(topic);
-    }
-
     public int size(String type) {
         ConcurrentLinkedQueue<TopicMessage> queue = topicMessages.get(type);
         return (queue != null) ? queue.size() : 0;
+    }
+
+    public boolean hasClientReceivedMessage(String clientName, TopicMessage message) {
+        return deliveredMessages.getOrDefault(clientName, Collections.emptySet()).contains(message);
+    }
+
+    public void markMessageAsDeliveredToClient(String clientName, TopicMessage message) {
+        deliveredMessages.computeIfAbsent(clientName, k -> ConcurrentHashMap.newKeySet()).add(message);
     }
 
     private void startGarbageCollector() {
@@ -52,10 +60,17 @@ public class TopicOrchestrator {
                 try {
                     long currentTime = System.currentTimeMillis();
                     topicMessages.forEach((type, queue) -> {
-                        queue.removeIf(message -> currentTime - message.getSentTime() > maxTimeout);
+                        queue.removeIf(message -> {
+                            boolean shouldRemove = currentTime - message.getSentTime() > maxTimeout;
+                            if (shouldRemove) {
+                                logger.info("Removing expired message from topic [{}]: {}", type, message.getContent());
+                            }
+                            return shouldRemove;
+                        });
                     });
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
+                    logger.info("Garbage collector thread interrupted");
                     Thread.currentThread().interrupt();
                     break;
                 }

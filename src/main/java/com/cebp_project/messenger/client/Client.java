@@ -74,10 +74,10 @@ public class Client implements Runnable {
         logger.info("Client [{}] publishing topic messages to topic {}", name, topic);
 
         // Message that expires
-        publishOneTopicMessage(topic, "EXPIRED Broadcast from " + name, ThreadLocalRandom.current().nextInt(5500, 7000));
+        publishOneTopicMessage(topic, "EXPIRED TopicMsg from " + name, ThreadLocalRandom.current().nextInt(5500, 6500));
 
         // Message that doesn't expire
-        publishOneTopicMessage(topic, "Broadcast from " + name + " #" + topic, ThreadLocalRandom.current().nextInt(1000, 1500));
+        publishOneTopicMessage(topic, "TopicMsg from " + name + " #" + topic, ThreadLocalRandom.current().nextInt(1000, 1500));
     }
 
     private void publishOneBroadcastMessage(String clientName, String messageContent) throws InterruptedException, IOException {

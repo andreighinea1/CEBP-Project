@@ -78,7 +78,6 @@ public class Server implements Runnable {
             if (messagesForTopic != null) {
                 processMessagesForTopic(topic, messagesForTopic);
             }
-            topicOrchestrator.clearMessagesForTopic(topic);
         }
     }
 
@@ -87,7 +86,10 @@ public class Server implements Runnable {
         if (subscribers != null) {
             for (TopicMessage message : messages) {
                 for (Client subscriber : subscribers) {
-                    subscriber.receiveTopicMessage(message);
+                    if (!topicOrchestrator.hasClientReceivedMessage(subscriber.getName(), message)) {
+                        subscriber.receiveTopicMessage(message);
+                        topicOrchestrator.markMessageAsDeliveredToClient(subscriber.getName(), message);
+                    }
                 }
             }
         }

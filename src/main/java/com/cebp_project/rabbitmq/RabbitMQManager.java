@@ -64,7 +64,7 @@ public class RabbitMQManager {
     public void publishTopicMessage(TopicMessage message) throws IOException {
         try {
             String messageJson = TopicMessageDTO.fromTopicMessage(message).toJson();
-            logger.debug("Publishing message to topic queue: {}", messageJson);
+            logger.debug("Publishing message to the topic queue: {}", messageJson);
             channel.basicPublish("", RABBITMQ_TOPIC_QUEUE_NAME, null, messageJson.getBytes());
         } catch (IOException e) {
             logger.error("Failed to publish topic message {} to RabbitMQ", message, e);

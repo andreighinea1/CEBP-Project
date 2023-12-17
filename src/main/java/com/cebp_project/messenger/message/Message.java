@@ -1,5 +1,7 @@
 package com.cebp_project.messenger.message;
 
+import java.util.Objects;
+
 public class Message {
     String sender;
     String recipient;
@@ -40,5 +42,17 @@ public class Message {
     @Override
     public String toString() {
         return "Message from '" + sender + "' to '" + recipient + "': " + content + " [at " + timestamp + "]";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Message message)) return false;
+        return getTimestamp() == message.getTimestamp() && Objects.equals(getSender(), message.getSender()) && Objects.equals(getRecipient(), message.getRecipient()) && Objects.equals(getContent(), message.getContent());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getSender(), getRecipient(), getContent(), getTimestamp());
     }
 }
