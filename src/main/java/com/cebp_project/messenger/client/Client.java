@@ -84,15 +84,16 @@ public class Client implements Runnable {
     private void publishTopicMessages() throws InterruptedException, IOException {
         logger.info("Client [{}] publishing topic messages", name);
 
+        // Message that expires
         try {
             topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "EXPIRED Broadcast from " + name));
-//            Thread.sleep(ThreadLocalRandom.current().nextInt(0, 3500));  // The msg won't expire
-            Thread.sleep(5500 + ThreadLocalRandom.current().nextInt(0, 1000));  // The msg will expire
+            Thread.sleep(5500 + ThreadLocalRandom.current().nextInt(0, 1000));
         } catch (IOException e) {
             logger.error("Error from RabbitMQ: {}", e.getMessage());
             throw e;
         }
 
+        // Message that doesn't expire
         try {
             topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "Broadcast from " + name + " #topic"));
             // Simulate a random delay for listening to topic
