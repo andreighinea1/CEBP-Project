@@ -19,6 +19,10 @@ import java.util.concurrent.TimeoutException;
 import static com.cebp_project.messenger.constants.Constants.MessageQueueMaxSize;
 import static com.cebp_project.messenger.constants.Constants.TopicOrchestratorMaxTimeout;
 
+/**
+ * Represents the server that manages message processing and distribution.
+ * It handles direct client-to-client messages and messages published to topics.
+ */
 public class Server implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private final Map<String, Client> clients;
@@ -28,26 +32,43 @@ public class Server implements Runnable {
     private final RabbitMQManager serverRabbitMQManager;
     private volatile boolean running = true;
 
+    /**
+     * Constructs a new Server instance.
+     */
     public Server() {
         this.clients = new ConcurrentHashMap<>();
         this.topicSubscribers = new ConcurrentHashMap<>();
-
         this.serverRabbitMQManager = new RabbitMQManager();
         this.topicOrchestrator = new TopicOrchestrator(TopicOrchestratorMaxTimeout, this.serverRabbitMQManager);
         this.messageQueue = new MessageQueue(MessageQueueMaxSize, this.serverRabbitMQManager);
     }
 
-
+    /**
+     * Registers a client with the server.
+     *
+     * @param name   The name of the client.
+     * @param client The client object to register.
+     */
     public void registerClient(String name, Client client) {
         clients.put(name, client);
         logger.info("Client registered: {}", name);
     }
 
+    /**
+     * Subscribes a client to a specific topic.
+     *
+     * @param topic  The topic to subscribe to.
+     * @param client The client subscribing to the topic.
+     */
     public void subscribeClientToTopic(String topic, Client client) {
         topicSubscribers.computeIfAbsent(topic, k -> new ArrayList<>()).add(client);
         logger.info("Client [{}] subscribed to topic: {}", client.getName(), topic);
     }
 
+    /**
+     * The main run loop of the server.
+     * Handles processing of direct messages and topic messages.
+     */
     @Override
     public void run() {
         logger.info("Server started processing messages");
@@ -57,11 +78,14 @@ public class Server implements Runnable {
                 processTopicMessages();
             } catch (Exception e) {
                 logger.error("Error in Server run loop", e);
-                // TODO: Decide whether to continue or stop based on the error
+                // TODO: Determine the next steps based on the severity of the error.
             }
         }
     }
 
+    /**
+     * Processes direct messages from the message queue and delivers them to the intended recipients.
+     */
     private void processDirectMessages() {
         Message message = messageQueue.poll();
         if (message != null) {
@@ -72,6 +96,9 @@ public class Server implements Runnable {
         }
     }
 
+    /**
+     * Processes messages for each topic by delivering them to subscribed clients.
+     */
     private void processTopicMessages() {
         for (String topic : topicSubscribers.keySet()) {
             List<TopicMessage> messagesForTopic = topicOrchestrator.readMessages(topic);
@@ -81,6 +108,12 @@ public class Server implements Runnable {
         }
     }
 
+    /**
+     * Delivers topic messages to all subscribed clients for a specific topic.
+     *
+     * @param topic    The topic for which messages are being processed.
+     * @param messages The list of messages to be delivered.
+     */
     private void processMessagesForTopic(String topic, List<TopicMessage> messages) {
         List<Client> subscribers = topicSubscribers.get(topic);
         if (subscribers != null) {
@@ -95,9 +128,13 @@ public class Server implements Runnable {
         }
     }
 
+    /**
+     * Gracefully stops the server, closing all resources and halting message processing.
+     */
     public void stopServer() {
         running = false;
         try {
+            //noinspection ConstantValue
             if (serverRabbitMQManager != null) {
                 serverRabbitMQManager.close();
             }

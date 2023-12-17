@@ -19,16 +19,26 @@ import java.util.function.Consumer;
 import static com.cebp_project.messenger.constants.Constants.RABBITMQ_BROADCAST_QUEUE_NAME;
 import static com.cebp_project.messenger.constants.Constants.RABBITMQ_TOPIC_QUEUE_NAME;
 
+/**
+ * Manages RabbitMQ connections and message operations.
+ * This class provides methods to publish and consume messages from RabbitMQ queues.
+ */
 public class RabbitMQManager {
     private static final Logger logger = LoggerFactory.getLogger(RabbitMQManager.class);
     private Channel channel;
     private Connection connection;
 
+    /**
+     * Initializes and sets up RabbitMQ connection and channels.
+     */
     public RabbitMQManager() {
         setupRabbitMQ();
     }
 
-
+    /**
+     * Sets up the RabbitMQ connection and channel, declaring necessary queues.
+     * Throws RuntimeException if setup fails.
+     */
     private void setupRabbitMQ() {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
@@ -50,6 +60,12 @@ public class RabbitMQManager {
         }
     }
 
+    /**
+     * Publishes a message to the broadcast queue in RabbitMQ.
+     *
+     * @param message The message to be published.
+     * @throws IOException if there's an issue with message publishing.
+     */
     public void publishMessage(Message message) throws IOException {
         try {
             String messageJson = MessageQueueDTO.fromMessage(message).toJson();
@@ -61,6 +77,12 @@ public class RabbitMQManager {
         }
     }
 
+    /**
+     * Publishes a topic message to the topic queue in RabbitMQ.
+     *
+     * @param message The topic message to be published.
+     * @throws IOException if there's an issue with topic message publishing.
+     */
     public void publishTopicMessage(TopicMessage message) throws IOException {
         try {
             String messageJson = TopicMessageDTO.fromTopicMessage(message).toJson();
@@ -72,6 +94,13 @@ public class RabbitMQManager {
         }
     }
 
+    /**
+     * Consumes messages from a specified queue.
+     *
+     * @param queueName        The name of the RabbitMQ queue to consume from.
+     * @param messageProcessor The function to process the consumed messages.
+     * @throws IOException if there's an issue with message consumption.
+     */
     private void consumeMessages(String queueName, Consumer<String> messageProcessor) throws IOException {
         try {
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
@@ -88,14 +117,32 @@ public class RabbitMQManager {
         }
     }
 
+    /**
+     * Starts consuming messages from the broadcast queue.
+     *
+     * @param messageProcessor The function to process the consumed broadcast messages.
+     * @throws IOException if there's an issue with message consumption.
+     */
     public void consumeBroadcastMessages(Consumer<String> messageProcessor) throws IOException {
         consumeMessages(RABBITMQ_BROADCAST_QUEUE_NAME, messageProcessor);
     }
 
+    /**
+     * Starts consuming messages from the topic queue.
+     *
+     * @param messageProcessor The function to process the consumed topic messages.
+     * @throws IOException if there's an issue with message consumption.
+     */
     public void consumeTopicMessages(Consumer<String> messageProcessor) throws IOException {
         consumeMessages(RABBITMQ_TOPIC_QUEUE_NAME, messageProcessor);
     }
 
+    /**
+     * Closes the RabbitMQ channel and connection, releasing resources.
+     *
+     * @throws IOException      if there's an issue closing the channel or connection.
+     * @throws TimeoutException if a network timeout occurs.
+     */
     public void close() throws IOException, TimeoutException {
         try {
             if (channel != null) {

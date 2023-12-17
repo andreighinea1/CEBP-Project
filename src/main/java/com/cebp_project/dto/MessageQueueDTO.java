@@ -8,6 +8,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.Serializable;
 
+/**
+ * Data Transfer Object for message data in the message queue.
+ * This class provides methods for serializing and deserializing message data,
+ * along with methods to convert from and to {@link Message} objects.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MessageQueueDTO implements Serializable {
     @JsonProperty("sender")
@@ -22,6 +27,14 @@ public class MessageQueueDTO implements Serializable {
     @JsonProperty("timestamp")
     private long timestamp;
 
+    /**
+     * Constructs a new MessageQueueDTO instance.
+     *
+     * @param sender    the sender of the message
+     * @param recipient the intended recipient of the message
+     * @param content   the content of the message
+     * @param timestamp the timestamp when the message was created
+     */
     private MessageQueueDTO(@JsonProperty("sender") String sender,
                             @JsonProperty("recipient") String recipient,
                             @JsonProperty("content") String content,
@@ -32,12 +45,22 @@ public class MessageQueueDTO implements Serializable {
         this.timestamp = timestamp;
     }
 
-
+    /**
+     * Converts a {@link Message} object to a MessageQueueDTO.
+     *
+     * @param message the message to convert
+     * @return a new instance of MessageQueueDTO
+     */
     public static MessageQueueDTO fromMessage(Message message) {
         return new MessageQueueDTO(message.getSender(), message.getRecipient(), message.getContent(), message.getTimestamp());
     }
 
-    // Method to deserialize JSON to MessageQueueDTO
+    /**
+     * Deserializes a JSON string to a MessageQueueDTO object.
+     *
+     * @param json the JSON string to deserialize
+     * @return a MessageQueueDTO object or null if deserialization fails
+     */
     public static MessageQueueDTO fromJson(String json) {
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -48,7 +71,11 @@ public class MessageQueueDTO implements Serializable {
         }
     }
 
-    // Method to serialize MessageQueueDTO to JSON
+    /**
+     * Serializes this MessageQueueDTO to a JSON string.
+     *
+     * @return a JSON representation of this MessageQueueDTO or null if serialization fails
+     */
     public String toJson() {
         try {
             ObjectMapper mapper = new ObjectMapper();

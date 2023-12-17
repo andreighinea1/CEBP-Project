@@ -8,6 +8,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.Serializable;
 
+/**
+ * Data Transfer Object for topic message data.
+ * Provides methods for serializing and deserializing topic message data,
+ * along with methods to convert from and to {@link TopicMessage} objects.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TopicMessageDTO implements Serializable {
     @JsonProperty("type")
@@ -19,6 +24,13 @@ public class TopicMessageDTO implements Serializable {
     @JsonProperty("sentTime")
     private long sentTime;
 
+    /**
+     * Constructs a new TopicMessageDTO instance.
+     *
+     * @param type     the type of the topic message
+     * @param content  the content of the topic message
+     * @param sentTime the time when the message was sent
+     */
     private TopicMessageDTO(@JsonProperty("type") String type,
                             @JsonProperty("content") String content,
                             @JsonProperty("sentTime") long sentTime) {
@@ -27,12 +39,22 @@ public class TopicMessageDTO implements Serializable {
         this.sentTime = sentTime;
     }
 
-
+    /**
+     * Converts a {@link TopicMessage} object to a TopicMessageDTO.
+     *
+     * @param message the topic message to convert
+     * @return a new instance of TopicMessageDTO
+     */
     public static TopicMessageDTO fromTopicMessage(TopicMessage message) {
         return new TopicMessageDTO(message.getType(), message.getContent(), message.getSentTime());
     }
 
-    // Method to deserialize JSON to TopicMessageDTO
+    /**
+     * Deserializes a JSON string to a TopicMessageDTO object.
+     *
+     * @param json the JSON string to deserialize
+     * @return a TopicMessageDTO object or null if deserialization fails
+     */
     public static TopicMessageDTO fromJson(String json) {
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -43,7 +65,11 @@ public class TopicMessageDTO implements Serializable {
         }
     }
 
-    // Method to serialize TopicMessageDTO to JSON
+    /**
+     * Serializes this TopicMessageDTO to a JSON string.
+     *
+     * @return a JSON representation of this TopicMessageDTO or null if serialization fails
+     */
     public String toJson() {
         try {
             ObjectMapper mapper = new ObjectMapper();

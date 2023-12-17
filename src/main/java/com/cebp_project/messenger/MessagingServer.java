@@ -9,9 +9,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * The MessagingServer class is the entry point for starting the messaging server.
+ * It initiates the server and client threads and handles the orderly shutdown of these components.
+ */
 public class MessagingServer {
     private static final Logger logger = LoggerFactory.getLogger(MessagingServer.class);
 
+    /**
+     * The main method to start the Messaging Server.
+     *
+     * @param args Command line arguments (not used in this implementation).
+     */
     public static void main(String[] args) {
         logger.info("Starting MessagingServer");
 
@@ -40,6 +49,14 @@ public class MessagingServer {
         }));
     }
 
+    /**
+     * Starts client threads for each client name provided.
+     * It ensures that specific clients are subscribed to certain topics.
+     *
+     * @param clientNames A list of client names to start threads for.
+     * @param server      The server instance to which the clients will connect.
+     * @return A list of threads representing the clients.
+     */
     private static List<Thread> startClientThreads(List<String> clientNames, Server server) {
         List<Thread> clientThreads = new ArrayList<>();
         for (String clientName : clientNames) {

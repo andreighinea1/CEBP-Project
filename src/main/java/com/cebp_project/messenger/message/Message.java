@@ -2,12 +2,23 @@ package com.cebp_project.messenger.message;
 
 import java.util.Objects;
 
+/**
+ * Represents a message in the messaging system.
+ */
 public class Message {
-    String sender;
-    String recipient;
-    String content;
-    long timestamp;
+    private String sender;
+    private String recipient;
+    private String content;
+    private long timestamp;
 
+    /**
+     * Constructs a Message instance for decoding from RabbitMQ DTO.
+     *
+     * @param sender    The sender of the message.
+     * @param recipient The recipient of the message.
+     * @param content   The content of the message.
+     * @param timestamp The time when the message was created.
+     */
     public Message(String sender, String recipient, String content, long timestamp) {
         this.sender = sender;
         this.recipient = recipient;
@@ -15,11 +26,15 @@ public class Message {
         this.timestamp = timestamp;
     }
 
+    /**
+     * Constructs a Message instance for sending.
+     *
+     * @param sender    The sender of the message.
+     * @param recipient The recipient of the message.
+     * @param content   The content of the message.
+     */
     public Message(String sender, String recipient, String content) {
-        this.sender = sender;
-        this.recipient = recipient;
-        this.content = content;
-        this.timestamp = System.currentTimeMillis();
+        this(sender, recipient, content, System.currentTimeMillis());
     }
 
 

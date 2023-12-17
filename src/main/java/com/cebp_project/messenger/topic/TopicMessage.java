@@ -2,21 +2,35 @@ package com.cebp_project.messenger.topic;
 
 import java.util.Objects;
 
+/**
+ * Represents a topic message in the messaging system.
+ */
 public class TopicMessage {
     private final long sentTime;
-    String type;
-    String content;
+    private String type;
+    private String content;
 
-    public TopicMessage(String type, String content) {
-        this.type = type;
-        this.content = content;
-        this.sentTime = System.currentTimeMillis();
-    }
-
+    /**
+     * Constructs a TopicMessage instance for decoding from RabbitMQ DTO.
+     *
+     * @param type     The type or category of the topic message.
+     * @param content  The content of the topic message.
+     * @param sentTime The time when the topic message was created.
+     */
     public TopicMessage(String type, String content, long sentTime) {
         this.type = type;
         this.content = content;
         this.sentTime = sentTime;
+    }
+
+    /**
+     * Constructs a TopicMessage instance for sending.
+     *
+     * @param type    The type or category of the topic message.
+     * @param content The content of the topic message.
+     */
+    public TopicMessage(String type, String content) {
+        this(type, content, System.currentTimeMillis());
     }
 
 
