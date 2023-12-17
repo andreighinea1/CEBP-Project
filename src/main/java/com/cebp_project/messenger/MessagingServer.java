@@ -5,6 +5,7 @@ import com.cebp_project.messenger.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,11 +21,28 @@ public class MessagingServer {
         Thread serverThread = new Thread(server);
         serverThread.start();
 
+        List<Thread> clientThreads = new ArrayList<>();
         for (String clientName : clientNames) {
-            // Pass all required parameters to the Client constructor
             Client client = new Client(clientName, clientNames, server);
             Thread clientThread = new Thread(client);
+            clientThreads.add(clientThread);
             clientThread.start();
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("Shutting down MessagingServer");
+            server.stopServer();
+            clientThreads.forEach(Thread::interrupt);
+            try {
+                serverThread.join();
+                for (Thread clientThread : clientThreads) {
+                    clientThread.join();
+                }
+            } catch (InterruptedException e) {
+                logger.error("Interrupted during shutdown", e);
+                Thread.currentThread().interrupt();
+            }
+            logger.info("MessagingServer shutdown complete");
+        }));
     }
 }

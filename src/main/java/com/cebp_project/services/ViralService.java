@@ -19,6 +19,7 @@ public class ViralService implements Runnable {
     private final ConcurrentHashMap<String, Integer> broadcastHashtagCounts;
     private final ConcurrentHashMap<String, Integer> topicHashtagCounts;
     private final RabbitMQManager rabbitMQManager;
+    private volatile boolean running = true;  // Flag to control the running of the service
 
     public ViralService() {
         this.broadcastHashtagCounts = new ConcurrentHashMap<>();
@@ -33,6 +34,11 @@ public class ViralService implements Runnable {
         Thread viralThread = new Thread(viralService);
         viralThread.start();
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("Shutdown hook triggered. Stopping ViralService.");
+            viralService.stopService();
+        }));
+
         try {
             viralThread.join();
         } catch (InterruptedException e) {
@@ -41,23 +47,25 @@ public class ViralService implements Runnable {
         }
     }
 
-
     @Override
     public void run() {
         try {
             rabbitMQManager.consumeBroadcastMessages(this::processBroadcastMessageJson);
             rabbitMQManager.consumeTopicMessages(this::processTopicMessageJson);
         } catch (IOException e) {
-            logger.error("Error consuming messages in ViralService", e);
+            logger.error("Error setting up message consumption in ViralService", e);
+            return;
         }
 
         try {
-            while (!Thread.currentThread().isInterrupted()) {
+            while (running) {
                 displayTrendingHashtags();
                 Thread.sleep(1000);
             }
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            logger.error("ViralService interrupted", e);
+        } finally {
+            stopService();
         }
     }
 
@@ -128,6 +136,8 @@ public class ViralService implements Runnable {
     }
 
     public void stopService() {
+        logger.info("Stopping ViralService.");
+        running = false;  // Set flag to false in order to stop the service
         try {
             if (rabbitMQManager != null) {
                 rabbitMQManager.close();

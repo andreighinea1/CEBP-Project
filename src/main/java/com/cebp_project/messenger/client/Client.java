@@ -43,18 +43,20 @@ public class Client implements Runnable {
     public void run() {
         logger.info("Client [{}] started", name);
         server.registerClient(name, this); // Register client with the server
-        server.subscribeClientToTopic(topicToUse, this); // Register client with the server
+        server.subscribeClientToTopic(topicToUse, this); // Subscribe client to the topic
         try {
             sendMockMessages();
             publishTopicMessages();
-        } catch (InterruptedException | IllegalStateException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
             logger.error("Error in Client [{}]: {}", name, e.getMessage());
             Thread.currentThread().interrupt();
         }
     }
 
-    private void sendMockMessages() throws InterruptedException {
-        logger.debug("Client [{}] sending mock messages", name);
+    private void sendMockMessages() throws InterruptedException, IOException {
+        logger.info("Client [{}] sending mock messages", name);
         String[] mockMessages = {
                 "Hello from " + name + " #welcome",
                 "Enjoying Java programming #java #coding"
@@ -66,10 +68,11 @@ public class Client implements Runnable {
                     try {
                         messageQueue.sendMessage(new Message(this.name, clientName, messageContent, System.currentTimeMillis()));
                     } catch (IllegalStateException e) {
-                        logger.error("Queue full, couldn't send broadcast msg");
+                        logger.error("Queue full, couldn't send broadcast message: {}", e.getMessage());
+                        throw e;
                     } catch (IOException e) {
-                        logger.error("Error from RabbitMQ");
-                        throw new RuntimeException(e);
+                        logger.error("Error from RabbitMQ: {}", e.getMessage());
+                        throw e;
                     }
                 }
             }
@@ -78,17 +81,16 @@ public class Client implements Runnable {
         }
     }
 
-    private void publishTopicMessages() throws InterruptedException {
-        // Publish topic messages
-        logger.debug("Client [{}] publishing topic messages", name);
+    private void publishTopicMessages() throws InterruptedException, IOException {
+        logger.info("Client [{}] publishing topic messages", name);
 
         try {
             topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "EXPIRED Broadcast from " + name));
 //            Thread.sleep(ThreadLocalRandom.current().nextInt(0, 3500));  // The msg won't expire
             Thread.sleep(5500 + ThreadLocalRandom.current().nextInt(0, 1000));  // The msg will expire
         } catch (IOException e) {
-            logger.error("Error from RabbitMQ");
-            throw new RuntimeException(e);
+            logger.error("Error from RabbitMQ: {}", e.getMessage());
+            throw e;
         }
 
         try {
@@ -96,8 +98,8 @@ public class Client implements Runnable {
             // Simulate a random delay for listening to topic
             Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 1500));
         } catch (IOException e) {
-            logger.error("Error from RabbitMQ");
-            throw new RuntimeException(e);
+            logger.error("Error from RabbitMQ: {}", e.getMessage());
+            throw e;
         }
     }
 }

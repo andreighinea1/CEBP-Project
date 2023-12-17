@@ -101,10 +101,12 @@ public class RabbitMQManager {
             if (channel != null) {
                 logger.info("Closing RabbitMQ channel...");
                 channel.close();
+                channel = null;
             }
             if (connection != null) {
                 logger.info("Closing RabbitMQ connection...");
                 connection.close();
+                connection = null;
             }
             logger.info("RabbitMQ resources closed successfully.");
         } catch (IOException | TimeoutException e) {

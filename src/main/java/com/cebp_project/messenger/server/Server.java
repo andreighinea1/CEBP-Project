@@ -9,10 +9,12 @@ import com.cebp_project.rabbitmq.RabbitMQManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 
 import static com.cebp_project.messenger.constants.Constants.MessageQueueMaxSize;
 import static com.cebp_project.messenger.constants.Constants.TopicOrchestratorMaxTimeout;
@@ -24,13 +26,15 @@ public class Server implements Runnable {
     private final TopicOrchestrator topicOrchestrator;
     private final MessageQueue messageQueue;
     private final RabbitMQManager serverRabbitMQManager;
+    private volatile boolean running = true;
 
     public Server() {
         this.clients = new ConcurrentHashMap<>();
         this.topicSubscribers = new ConcurrentHashMap<>();
+
         this.serverRabbitMQManager = new RabbitMQManager();
-        this.topicOrchestrator = new TopicOrchestrator(TopicOrchestratorMaxTimeout, serverRabbitMQManager);
-        this.messageQueue = new MessageQueue(MessageQueueMaxSize, serverRabbitMQManager);
+        this.topicOrchestrator = new TopicOrchestrator(TopicOrchestratorMaxTimeout, this.serverRabbitMQManager);
+        this.messageQueue = new MessageQueue(MessageQueueMaxSize, this.serverRabbitMQManager);
     }
 
 
@@ -47,12 +51,13 @@ public class Server implements Runnable {
     @Override
     public void run() {
         logger.info("Server started");
-        while (!Thread.currentThread().isInterrupted()) {
+        while (running && !Thread.currentThread().isInterrupted()) {
             try {
                 processDirectMessages();
                 processTopicMessages();
             } catch (Exception e) {
                 logger.error("Error in Server run loop", e);
+                // TODO: Decide whether to continue or stop based on the error
             }
         }
     }
@@ -86,6 +91,19 @@ public class Server implements Runnable {
                 }
             }
         }
+    }
+
+    public void stopServer() {
+        running = false;
+        try {
+            if (serverRabbitMQManager != null) {
+                serverRabbitMQManager.close();
+            }
+        } catch (IOException | TimeoutException e) {
+            logger.error("Error closing RabbitMQManager", e);
+        }
+        topicOrchestrator.stopGarbageCollector();
+        logger.info("Server stopped");
     }
 
     // Getters

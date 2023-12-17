@@ -1,6 +1,8 @@
 package com.cebp_project.messenger.topic;
 
 import com.cebp_project.rabbitmq.RabbitMQManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class TopicOrchestrator {
+    private static final Logger logger = LoggerFactory.getLogger(TopicOrchestrator.class);
     private final ConcurrentHashMap<String, ConcurrentLinkedQueue<TopicMessage>> topicMessages;
     private final long maxTimeout;
     private final RabbitMQManager serverRabbitMQManager;
@@ -23,6 +26,7 @@ public class TopicOrchestrator {
     }
 
     public void publishMessage(TopicMessage message) throws IOException {
+        logger.info("Publishing message to topic {}", message.getType());
         topicMessages.computeIfAbsent(message.getType(), k -> new ConcurrentLinkedQueue<>()).add(message);
         // Try to publish to the Server's RabbitMQ (which will be read by the ViralService)
         serverRabbitMQManager.publishTopicMessage(message);
@@ -64,6 +68,7 @@ public class TopicOrchestrator {
     }
 
     public void stopGarbageCollector() {
+        logger.info("Stopping Topic Orchestrator's garbage collector");
         if (garbageCollectorThread != null) {
             garbageCollectorThread.interrupt();
         }
