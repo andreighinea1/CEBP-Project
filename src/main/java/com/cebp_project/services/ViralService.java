@@ -1,4 +1,4 @@
-package com.cebp_project.viral_service;
+package com.cebp_project.services;
 
 import com.cebp_project.dto.MessageQueueDTO;
 import com.cebp_project.dto.TopicMessageDTO;
