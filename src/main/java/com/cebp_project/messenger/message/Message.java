@@ -13,6 +13,13 @@ public class Message {
         this.timestamp = timestamp;
     }
 
+    public Message(String sender, String recipient, String content) {
+        this.sender = sender;
+        this.recipient = recipient;
+        this.content = content;
+        this.timestamp = System.currentTimeMillis();
+    }
+
 
     public String getSender() {
         return sender;

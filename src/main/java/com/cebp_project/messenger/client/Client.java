@@ -19,39 +19,38 @@ public class Client implements Runnable {
     private final Server server;
     private final List<String> otherClients;
     private final TopicOrchestrator topicOrchestrator;
+    private final List<String> subscribedTopics;
 
-    private final String topicToUse = "commonTopic";
-
-    public Client(String name, List<String> otherClients, Server server) {
+    public Client(String name, List<String> otherClients, Server server, List<String> topics) {
         this.name = name;
         this.otherClients = otherClients;
         this.server = server;
         this.messageQueue = server.getMessageQueue();
         this.topicOrchestrator = server.getTopicOrchestrator();
+        this.subscribedTopics = topics;
     }
 
-
-    public void receiveMessage(Message message) {
-        logger.info("{} received: {}", name, message);
-    }
-
-    public void receiveTopicMessage(TopicMessage topicMessage) {
-        logger.info("{} received topic message: {}", name, topicMessage);
-    }
 
     @Override
     public void run() {
         logger.info("Client [{}] started", name);
-        server.registerClient(name, this); // Register client with the server
-        server.subscribeClientToTopic(topicToUse, this); // Subscribe client to the topic
+        server.registerClient(name, this);
+        subscribeToTopics();
+
         try {
             sendMockMessages();
-            publishTopicMessages();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            for (String topic : subscribedTopics) {
+                publishTopicMessages(topic);
+            }
         } catch (Exception e) {
             logger.error("Error in Client [{}]: {}", name, e.getMessage());
             Thread.currentThread().interrupt();
+        }
+    }
+
+    private void subscribeToTopics() {
+        for (String topic : subscribedTopics) {
+            server.subscribeClientToTopic(topic, this);
         }
     }
 
@@ -65,42 +64,56 @@ public class Client implements Runnable {
         for (String messageContent : mockMessages) {
             for (String clientName : otherClients) {
                 if (!clientName.equals(this.name)) {
-                    try {
-                        messageQueue.sendMessage(new Message(this.name, clientName, messageContent, System.currentTimeMillis()));
-                    } catch (IllegalStateException e) {
-                        logger.error("Queue full, couldn't send broadcast message: {}", e.getMessage());
-                        throw e;
-                    } catch (IOException e) {
-                        logger.error("Error from RabbitMQ: {}", e.getMessage());
-                        throw e;
-                    }
+                    publishOneBroadcastMessage(clientName, messageContent);
                 }
             }
-            // Simulate a random delay for sending messages
-            Thread.sleep(ThreadLocalRandom.current().nextInt(50, 250));
         }
     }
 
-    private void publishTopicMessages() throws InterruptedException, IOException {
-        logger.info("Client [{}] publishing topic messages", name);
+    private void publishTopicMessages(String topic) throws InterruptedException, IOException {
+        logger.info("Client [{}] publishing topic messages to topic {}", name, topic);
 
         // Message that expires
-        try {
-            topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "EXPIRED Broadcast from " + name));
-            Thread.sleep(5500 + ThreadLocalRandom.current().nextInt(0, 1000));
-        } catch (IOException e) {
-            logger.error("Error from RabbitMQ: {}", e.getMessage());
-            throw e;
-        }
+        publishOneTopicMessage(topic, "EXPIRED Broadcast from " + name, ThreadLocalRandom.current().nextInt(5500, 7000));
 
         // Message that doesn't expire
+        publishOneTopicMessage(topic, "Broadcast from " + name + " #" + topic, ThreadLocalRandom.current().nextInt(1000, 1500));
+    }
+
+    private void publishOneBroadcastMessage(String clientName, String messageContent) throws InterruptedException, IOException {
         try {
-            topicOrchestrator.publishMessage(new TopicMessage(topicToUse, "Broadcast from " + name + " #topic"));
-            // Simulate a random delay for listening to topic
-            Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 1500));
+            messageQueue.sendMessage(new Message(this.name, clientName, messageContent));
+            // Simulate a random delay for sending a message
+            Thread.sleep(ThreadLocalRandom.current().nextInt(10, 50));
+        } catch (IllegalStateException e) {
+            logger.error("Queue full, couldn't send broadcast message: {}", e.getMessage());
+            throw e;
         } catch (IOException e) {
             logger.error("Error from RabbitMQ: {}", e.getMessage());
             throw e;
         }
+    }
+
+    private void publishOneTopicMessage(String topic, String content, long delay) throws InterruptedException, IOException {
+        try {
+            topicOrchestrator.publishMessage(new TopicMessage(topic, content));
+            Thread.sleep(delay);
+        } catch (IOException e) {
+            logger.error("Error from RabbitMQ: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    public void receiveMessage(Message message) {
+        logger.info("{} received: {}", name, message);
+    }
+
+    public void receiveTopicMessage(TopicMessage topicMessage) {
+        logger.info("{} received topic message: {}", name, topicMessage);
+    }
+
+    // Getters
+    public String getName() {
+        return name;
     }
 }

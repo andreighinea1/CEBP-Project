@@ -45,7 +45,7 @@ public class Server implements Runnable {
 
     public void subscribeClientToTopic(String topic, Client client) {
         topicSubscribers.computeIfAbsent(topic, k -> new ArrayList<>()).add(client);
-        logger.info("Client subscribed to topic: {}", topic);
+        logger.info("Client [{}] subscribed to topic: {}", client.getName(), topic);
     }
 
     @Override

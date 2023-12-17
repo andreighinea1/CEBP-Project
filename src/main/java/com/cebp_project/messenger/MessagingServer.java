@@ -15,6 +15,7 @@ public class MessagingServer {
     public static void main(String[] args) {
         logger.info("Starting MessagingServer");
 
+        List<String> topics = Arrays.asList("topic1", "topic2");
         List<String> clientNames = Arrays.asList("Client 1", "Client 2", "Client 3");
 
         Server server = new Server();
@@ -23,7 +24,15 @@ public class MessagingServer {
 
         List<Thread> clientThreads = new ArrayList<>();
         for (String clientName : clientNames) {
-            Client client = new Client(clientName, clientNames, server);
+            List<String> clientTopics = new ArrayList<>();
+            // Randomly subscribe each client to one or more topics
+            for (String topic : topics) {
+                if (Math.random() > 0.5) {
+                    clientTopics.add(topic);
+                }
+            }
+
+            Client client = new Client(clientName, clientNames, server, clientTopics);
             Thread clientThread = new Thread(client);
             clientThreads.add(clientThread);
             clientThread.start();

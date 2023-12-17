@@ -26,7 +26,7 @@ public class TopicOrchestrator {
     }
 
     public void publishMessage(TopicMessage message) throws IOException {
-        logger.info("Publishing message to topic {}", message.getType());
+        logger.info("Publishing message to topic [{}]: {}", message.getType(), message.getContent());
         topicMessages.computeIfAbsent(message.getType(), k -> new ConcurrentLinkedQueue<>()).add(message);
         // Try to publish to the Server's RabbitMQ (which will be read by the ViralService)
         serverRabbitMQManager.publishTopicMessage(message);
