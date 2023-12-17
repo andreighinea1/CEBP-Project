@@ -73,18 +73,16 @@ public class Client implements Runnable {
     private void publishTopicMessages(String topic) throws InterruptedException, IOException {
         logger.info("Client [{}] publishing topic messages to topic {}", name, topic);
 
-        // Message that expires
-        publishOneTopicMessage(topic, "EXPIRED TopicMsg from " + name, ThreadLocalRandom.current().nextInt(5500, 6500));
-
         // Message that doesn't expire
-        publishOneTopicMessage(topic, "TopicMsg from " + name + " #" + topic, ThreadLocalRandom.current().nextInt(1000, 1500));
+        publishOneTopicMessage(topic, "TopicMsg from " + name + " #" + topic);
     }
 
     private void publishOneBroadcastMessage(String clientName, String messageContent) throws InterruptedException, IOException {
         try {
-            messageQueue.sendMessage(new Message(this.name, clientName, messageContent));
-            // Simulate a random delay for sending a message
+            // Simulate a random delay until the message would be sent (delay before to not enter the queue instantly)
             Thread.sleep(ThreadLocalRandom.current().nextInt(10, 50));
+            // Then send the msg
+            messageQueue.sendMessage(new Message(this.name, clientName, messageContent));
         } catch (IllegalStateException e) {
             logger.error("Queue full, couldn't send broadcast message: {}", e.getMessage());
             throw e;
@@ -94,10 +92,12 @@ public class Client implements Runnable {
         }
     }
 
-    private void publishOneTopicMessage(String topic, String content, long delay) throws InterruptedException, IOException {
+    private void publishOneTopicMessage(String topic, String content) throws InterruptedException, IOException {
         try {
+            // Simulate a random delay until the message would be sent (delay before to not enter the queue instantly)
+            Thread.sleep(ThreadLocalRandom.current().nextInt(250, 500));
+            // Then send the msg
             topicOrchestrator.publishMessage(new TopicMessage(topic, content));
-            Thread.sleep(delay);
         } catch (IOException e) {
             logger.error("Error from RabbitMQ: {}", e.getMessage());
             throw e;

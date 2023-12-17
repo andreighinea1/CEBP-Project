@@ -50,7 +50,7 @@ public class Server implements Runnable {
 
     @Override
     public void run() {
-        logger.info("Server started");
+        logger.info("Server started processing messages");
         while (running && !Thread.currentThread().isInterrupted()) {
             try {
                 processDirectMessages();
