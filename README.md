@@ -2,41 +2,74 @@
 
 ## Project Specifications
 
-The Messaging Server is designed to provide a multi-threaded messaging platform that includes direct messaging and topic-based subscriptions. Users, referred to as Clients, can send messages to each other via a message queue. Additionally, they can publish or subscribe to topics through which messages can be broadcasted. An Admin thread serves for monitoring and potentially managing the status of the queue and topics.
+The Messaging Server is a sophisticated, multi-threaded messaging system designed to facilitate both direct and
+topic-based messaging in a high-concurrency environment. It offers a platform where clients can exchange messages,
+subscribe to various topics, and receive real-time updates, making it suitable for applications like chat rooms,
+notification systems, and real-time data streaming. The system's architecture emphasizes efficiency and reliability,
+ensuring swift message processing and robust handling of numerous simultaneous interactions.
 
-This system aims to be a low-latency, high-concurrency solution for a multitude of real-world applications such as chat rooms, notification services, or real-time data feeds. With this design, it is essential that messages are processed in a manner that is both fast and reliable, even as the number of clients or topics scales.
+A key component of this system is the `ViralService`, a dedicated process for analyzing message trends, particularly by
+tracking hashtag usage in broadcast and topic messages. This service highlights the system's capability for real-time
+data analysis and trend monitoring.
 
-Given the necessity for real-time performance and high-concurrency, the underlying data structures for message storage and topic subscriptions must be optimized for quick read and write operations. Care must be taken to ensure that the system does not become a bottleneck when dealing with a large number of simultaneous messages or clients.
+## Concurrency Issues and Resolutions
 
-## Potential Concurrency Issues
+- **Race Conditions**: Addressed through the use of thread-safe collections like `ConcurrentHashMap` and synchronization
+  mechanisms in classes like `MessageQueue` and `TopicOrchestrator`, ensuring safe concurrent read/write operations.
+- **Deadlocks**: Avoided by designing a non-blocking message processing mechanism in the `Server` class and implementing
+  asynchronous message handling using the `RabbitMQManager`.
+- **Starvation**: Prevented by employing a fair queuing system in `MessageQueue` and ensuring equitable message
+  processing.
+- **Inconsistency**: Mitigated by utilizing atomic operations for message handling and ensuring immutable states of
+  messages once created.
+- **Thread Interruption Handling**: Properly managing thread interruptions in classes like `Client` and `ViralService`
+  to handle unexpected disruptions in thread execution.
+- **Graceful Shutdown Management**: The system employs `addShutdownHook` methods in both `MessagingServer`
+  and `ViralService` for proper shutdown and resource cleanup. This ensures that all threads and processes are
+  terminated in an orderly manner, preventing resource leakage and ensuring that the system state is consistent and
+  stable during shutdown sequences.
 
-- **Race Conditions**: Multiple threads (clients) could attempt to read or write to the message queue or topic lists simultaneously.
-- **Deadlocks**: Poorly managed thread locking could lead to a situation where two or more threads are waiting for each other to release locks.
-- **Starvation**: Given that older messages are removed when the queue is full, high throughput could result in some messages being lost before they are read.
-- **Inconsistency**: If not properly managed, a thread might read data that is currently being modified by another thread, leading to inconsistent states.
+The system's architecture and choice of data structures are specifically tailored to manage these challenges, ensuring
+that the messaging process remains consistent, reliable, and efficient.
 
 ## Proposed Architecture
 
 ### Modules
-- **MessagingServer**: The main module initiating all components and threads.
-- **MessageQueue**: Manages the queue of messages between clients.
-- **Topic**: Manages topic-based messaging.
 
-### Classes
-- **Server**: Responsible for processing the message queue and topics.
-- **Client**: Sends and receives messages, and interacts with topics.
-- **Admin**: Monitors the status of the message queue and topics.
-- **Message**: Represents a direct message.
-- **TopicMessage**: Represents a topic message.
+- **MessagingServer**: Initializes and orchestrates the server, clients, and the ViralService.
+- **MessageQueue**: Manages a thread-safe queue of direct messages.
+- **TopicOrchestrator**: Handles topic-based message storage and delivery.
+
+### Classes and Processes
+
+- **Server**: Processes and routes direct and topic messages to clients.
+- **Client**: Handles sending and receiving messages, and interacts with topics.
+- **ViralService**: A separate service process for analyzing and displaying trending hashtags in messages.
+- **Message**: Represents direct messages between clients.
+- **TopicMessage**: Represents messages published to topics.
+- **RabbitMQManager**: Manages interactions with RabbitMQ for message queuing and topic management.
 
 ### Threads
-- **Server Thread**: Processes the message queue and topics continuously.
-- **Client Threads**: Each client runs in its own thread for sending and receiving messages.
-- **Admin Thread**: Runs in a separate thread to monitor and possibly manage the server status.
+
+- **Server Thread**: Manages message routing and topic message processing.
+- **Client Threads**: Each operates in its own thread, sending and receiving messages.
+- **ViralService Thread**: Runs independently, in a separate process, analyzing message trends.
 
 ### Interactions
-- **Client-Server**: Clients send and receive messages through the Server's message queue and topic mechanisms.
-- **Admin-Server**: Admin can monitor or alter the state of the message queue and topics.
+
+- **Client-Server**: Clients interact with the server for message sending/receiving and topic subscriptions.
+- **ViralService-Server**: The ViralService consumes messages from RabbitMQ to analyze trends.
 
 ### Entry-Point
-The `MessagingServer` class serves as the entry point. It initializes the `MessageQueue` and `Topic` and starts the Server, Client, and Admin threads.
+
+The main entry point of the system is the `MessagingServer` class. It initiates the `Server` and `Client` threads. The
+server handles the core functionalities of message queuing and topic management, and allows the clients to communicate
+to each other, or to publish messages to specific topics.
+
+The other entry point is `ViralService`, which independently processes message data taken from RabbitMQ, for trend
+analysis.
+
+### External Interactions
+
+- **RabbitMQ Integration**: Facilitates distributed message processing and ensures scalability and resilience of the
+  system.

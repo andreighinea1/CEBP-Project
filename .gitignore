@@ -29,3 +29,4 @@ bin/
 .DS_Store
 /target/
 !.idea/.gitignore
+/class_descriptions
