@@ -101,19 +101,21 @@ public class TopicOrchestrator {
                 try {
                     long currentTime = System.currentTimeMillis();
 
-                    // Iterate over each topic queue to remove expired messages.
-                    topicMessages.forEach((type, queue) -> {
-                        queue.removeIf(message -> {
-                            boolean shouldRemove = currentTime - message.getSentTime() > maxTimeout;
-                            if (shouldRemove) {
-                                // Log the removal of an expired message.
-                                logger.info("Removing expired message from topic [{}]: {}", type, message.getContent());
+                    // First collect expired messages before removing them
+                    List<TopicMessage> expiredMessages = new ArrayList<>();
 
-                                // Clean corresponding entries in deliveredMessages to avoid memory leaks and ensure data consistency.
-                                cleanDeliveredMessagesForMessage(message);
+                    topicMessages.forEach((type, queue) -> {
+                        queue.forEach(message -> {
+                            if (currentTime - message.getSentTime() > maxTimeout) {
+                                expiredMessages.add(message);
+                                logger.info("Marking expired message for removal from topic [{}]: {}", type, message.getContent());
                             }
-                            return shouldRemove;
                         });
+
+                        // First remove them from the queue
+                        // Only then from the deliveredMessages (to prevent thread racing)
+                        expiredMessages.forEach(queue::remove);
+                        expiredMessages.forEach(this::cleanDeliveredMessagesForMessage);
                     });
 
                     Thread.sleep(500);

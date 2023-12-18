@@ -32,6 +32,11 @@ public class MessagingServer {
 
         List<Thread> clientThreads = startClientThreads(clientNames, server);
 
+        // Start Client before removing topic2
+        startClientAfterDelay("Client - BEFORE_REMOVAL", 4000, clientNames, server, clientThreads);
+        // Start Client after removing topic2
+        startClientAfterDelay("Client - AFTER_REMOVAL", 12000, clientNames, server, clientThreads);
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Shutting down MessagingServer");
             server.stopServer();
@@ -74,5 +79,22 @@ public class MessagingServer {
             clientThread.start();
         }
         return clientThreads;
+    }
+
+    private static void startClientAfterDelay(String clientName, long delay, List<String> clientNames, Server server, List<Thread> clientThreads) {
+        new Thread(() -> {
+            try {
+                Thread.sleep(delay);
+                List<String> topics = new ArrayList<>(List.of("topic2"));
+                Client client = new Client(clientName, clientNames, server, topics);
+                Thread clientThread = new Thread(client);
+                clientThread.start();
+                clientThreads.add(clientThread);
+                logger.info("{} started after delay", clientName);
+            } catch (InterruptedException e) {
+                logger.error("Interrupted while starting {}", clientName, e);
+                Thread.currentThread().interrupt();
+            }
+        }).start();
     }
 }
