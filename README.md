@@ -4,12 +4,12 @@
 
 The Messaging Server is a sophisticated, multi-threaded messaging system designed to facilitate both direct and
 topic-based messaging in a high-concurrency environment. It offers a platform where clients can exchange messages,
-subscribe to various topics, and receive real-time updates, making it suitable for applications like chat rooms,
-notification systems, and real-time data streaming. The system's architecture emphasizes efficiency and reliability,
+subscribe to various topics, and receive real-time updates, making it suitable for applications like chat rooms, or
+notification systems. The system's architecture emphasizes efficiency and reliability,
 ensuring swift message processing and robust handling of numerous simultaneous interactions.
 
-A key component of this system is the `ViralService`, a dedicated process for analyzing message trends, particularly by
-tracking hashtag usage in broadcast and topic messages. This service highlights the system's capability for real-time
+Another component of this system is the `ViralService`, a dedicated process for analyzing message trends, particularly
+by tracking hashtag usage in broadcast and topic messages. This service highlights the system's capability for real-time
 data analysis and trend monitoring.
 
 ## Concurrency Issues and Resolutions
