@@ -38,7 +38,8 @@ that the messaging process remains consistent, reliable, and efficient.
 
 - **MessagingServer**: Initializes and orchestrates the server, clients, and the ViralService.
 - **MessageQueue**: Manages a thread-safe queue of direct messages.
-- **TopicOrchestrator**: Handles topic-based message storage and delivery.
+- **TopicOrchestrator**: Handles topic-based message storage and delivery. It includes a garbage collector thread that
+  periodically removes expired messages from topics, ensuring efficient memory usage and data consistency.
 
 ### Classes and Processes
 
